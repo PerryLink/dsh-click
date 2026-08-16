@@ -8,7 +8,7 @@
  */
 
 /** Plugin version advertised in the helper-protocol handshake. */
-export const VERSION = '0.1.0'
+export const VERSION = '0.1.1'
 
 /** The helper protocol revision; bump only on incompatible wire changes. */
 export const HELPER_PROTOCOL_VERSION = 1
