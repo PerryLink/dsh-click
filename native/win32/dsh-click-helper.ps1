@@ -1,4 +1,4 @@
-# dsh-click native helper (Windows PowerShell 5.1).
+﻿# dsh-click native helper (Windows PowerShell 5.1).
 #
 # One request = one process: JSON request on stdin, JSON response on stdout
 # (exit code 0 even for handled failures; the error envelope is the response).
@@ -7,7 +7,7 @@
 # `focusFallback` flag is explicitly true (config-gated, approval-gated).
 #
 # Operations: windows, apps, shot, tree, snapshot, click, type, scroll, key, launch.
-# The helper is NOT a security boundary by itself — the harness-side
+# The helper is NOT a security boundary by itself - the harness-side
 # freshness check, approval gate, and process-identity check are. This file
 # only refuses to invent global input: actions address one window by handle.
 
@@ -111,7 +111,7 @@ function Write-DshError($code, $message) {
 
 function ConvertTo-DshJsonValue($value) {
   # PS 5.1 lacks -AsHashtable; round-trip through ConvertTo-Json/ConvertFrom-Json
-  # is unnecessary here — property bags serialized directly.
+  # is unnecessary here - property bags serialized directly.
   return $value
 }
 
@@ -762,7 +762,7 @@ function Invoke-OpType($opArgs) {
     }
     return (Get-ActionOutcome $hwnd 'type' 'posted' $null 'typed via posted WM_CHAR (no value pattern on the element)')
   }
-  throw "element '$($request.elementId)' exposes no value pattern and focusFallback is disabled — refusing to type into it"
+  throw "element '$($request.elementId)' exposes no value pattern and focusFallback is disabled - refusing to type into it"
 }
 
 function Invoke-OpScroll($opArgs) {
