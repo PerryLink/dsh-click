@@ -1,0 +1,53 @@
+# dsh-click bundle patch: mount the desktop-control plugin.
+#
+# Every key below is a Config field (Schemastery schema); invalid values fail
+# the profile load loudly. See README.md "Configuration" for the full table.
+- insert:
+    - id: dsh-click
+      name: dsh-click
+      config:
+        # Gate every mutating action (click/type/scroll/key/app_launch) behind
+        # approval. Observers (screen_shot/screen_read/app_list) never ask.
+        requireApproval: true
+        # Window title or executable-path regexes that skip the approval ask.
+        # The action still runs through the freshness and process-identity
+        # checks and is audit-logged. Empty = ask for every action.
+        autoApproveWindows: []
+        # Whether a mutating action may bring the target window to the
+        # foreground as a fallback when posted input is unavailable.
+        # 'never' (default) never steals focus; 'allow' permits the fallback.
+        focusFallback: never
+        # How screen_shot renders: 'auto' attaches an image when the current
+        # model accepts images and a text description otherwise; 'text' always
+        # returns the text-only description (for text-only models).
+        imageMode: auto
+        # Per-helper-call timeout in milliseconds (1..300000).
+        helperTimeoutMs: 30000
+        # Cap on one helper response in bytes (1024..67108864); PNG
+        # screenshots are base64-heavy.
+        maxHelperOutputBytes: 25165824
+        # Longest side of a captured screenshot in pixels (320..7680); larger
+        # captures are downscaled.
+        maxScreenshotSide: 2560
+        # Compare a fresh pixel hash of the target window before every action
+        # and refuse when it differs from the cited observation (the
+        # stale-state boundary). Disable only for tooling that mutates the
+        # screen faster than the check can run.
+        staleCheckPixels: true
+        # Maximum age in ms of an observation that an action may still base
+        # on (1000..600000). Older observations are refused and must be
+        # re-observed.
+        maxObservationAgeMs: 30000
+        # Cap on cached observations (1..64), LRU-evicted. Actions address
+        # observations by the id returned from screen_shot/screen_read.
+        maxCachedObservations: 8
+        # Cap on accessibility elements one screen_read returns (1..2000).
+        maxElements: 500
+        # Maximum depth of the accessibility tree walk (1..64).
+        maxTreeDepth: 32
+        # Truncation length for sanitized model-visible strings (16..10000):
+        # window titles, executable paths, element names.
+        maxTextLength: 200
+        # Back up and restore control text when `type` fails (true = restore
+        # the original text; false = leave the partially typed text).
+        rollbackEnabled: true

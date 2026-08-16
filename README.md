@@ -1,0 +1,174 @@
+<div align="center">
+
+# 🖱️ dsh-click
+
+**Cross-platform native desktop control for DeepSeek Harness — Windows first.**
+
+*Look at the screen, then act — every click gated, every action audited.*
+
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![DSH plugin](https://img.shields.io/badge/dsh-plugin-✅-green)](https://github.com/topics/dsh-plugin)
+[![Node](https://img.shields.io/badge/node-%5E22.19%20%7C%7C%20%3E%3D24-brightgreen.svg)](#)
+[![CI](https://img.shields.io/github/actions/workflow/status/PerryLink/dsh-click/ci.yml?branch=main&label=CI)](https://github.com/PerryLink/dsh-click/actions)
+[![Version](https://img.shields.io/github/v/tag/PerryLink/dsh-click?label=version)](https://github.com/PerryLink/dsh-click/releases)
+[![npm version](https://img.shields.io/npm/v/dsh-click)](https://www.npmjs.com/package/dsh-click)
+[![npm downloads](https://img.shields.io/npm/dm/dsh-click)](https://www.npmjs.com/package/dsh-click)
+
+[English](README.md) · [简体中文](README.zh.md) · [Español](README.es.md) · [Português](README.pt.md) · [हिन्दी](README.hi.md)
+
+</div>
+
+---
+
+## Compatibility
+
+| Surface | Status |
+|---|---|
+| Harness | DeepSeek Harness `0.1.0-rc.6` (compat declared for `0.1.0-rc.5`–`0.1.0-rc.6`) |
+| Node | `^22.19.0 \|\| >=24.0.0` |
+| Platforms | **Windows first** (UIAutomation + Win32 input, via a bundled PowerShell helper); macOS/Linux backends are reserved and fail closed with a clear reason |
+| Model | Text-only models fully supported (`screen_read` returns structured text); vision models additionally get `screen_shot` images |
+
+## What you get
+
+`dsh-click` gives the harness a complete observe → act loop over native desktop applications:
+
+- **`screen_shot`** — screenshot of a window (or the primary screen), downscaled to a configurable bound. With a vision-capable model the result carries the image; otherwise a text description keeps text-only models working.
+- **`screen_read`** — the structured observation: the window's accessibility tree (element ids, types, names, rectangles, supported patterns) plus pixel-location hints with colors — plain text, no image model required.
+- **`click` / `type` / `scroll` / `key`** — window-scoped actions addressed by element id or coordinates. Delivery prefers UIA invoke, falls back to posted window messages — and **never steals foreground focus**.
+- **`app_list` / `app_launch`** — enumerate running applications and their windows; launch one by name or path.
+
+Every mutating action crosses one safety boundary:
+
+1. **Freshness** — the action must cite a `basedOn` observation; the window is re-captured right before acting and the action is refused if the screen changed (pixel-hash check + max-age bound).
+2. **Approval** — `ctx.approval` gates every action by default; window-title/executable regexes can allowlist specific windows (still audited).
+3. **Process identity** — the owning process's pid and executable path are verified before **and** after the act; a change refuses the outcome loudly.
+4. **Audit** — observations and actions land in the session log as `dsh-click/observed` / `dsh-click/action` events (sanitized, log-only).
+
+```text
+model                           harness
+  │ screen_read ──▶ observationId (+ elements, pixels)         ← structured text
+  │ click {basedOn, target} ──▶ freshness check ──▶ approval ──▶ helper (UIA)
+  │                             pixel hash changed? ── refuse + re-observe
+  │                             pid/exe changed after act? ── PROCESS_CHANGED
+  │ ◀── canonical JSON + audit events (dsh-click/action)
+```
+
+## Quick start
+
+```sh
+# 1. install the bundle into your profile
+dsh plugin --profile web add "github:PerryLink/dsh-click#main"
+
+# or from npm (published releases)
+dsh plugin --profile web add dsh-click
+
+# 2. restart and verify the row
+dsh --profile web --dump-config | grep -A2 'id: dsh-click'
+```
+
+Then ask the agent to look at a window and act — the approval prompt appears for every mutating action:
+
+```
+> Open Notepad, type "hello", then read back what is on screen.
+```
+
+## Install & uninstall
+
+- **git channel** (latest `main`): `dsh plugin --profile web add "github:PerryLink/dsh-click#main"` — the `prepare` script builds with production dependencies only.
+- **npm channel** (published releases): `dsh plugin --profile web add dsh-click`.
+- **tarball channel**: `pnpm pack` in this repo, then `dsh plugin --profile web add ./dsh-click-<version>.tgz`.
+- **uninstall**: `dsh plugin --profile web remove dsh-click` (or remove the row from the profile patch).
+
+## Configuration
+
+All tunables are Schemastery `Config` fields (changeable from cordis.yml). An id-targeted override replaces the whole row — restate every key you need. `cordis.patch.yml` documents each key inline.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `requireApproval` | `true` | Gate every mutating action behind approval; observers never ask |
+| `autoApproveWindows` | `[]` | Window-title/executable regexes that skip the approval ask (still freshness-checked and audited) |
+| `focusFallback` | `never` | Whether an action may bring the target window to the foreground as a last resort (`never` / `allow`) |
+| `imageMode` | `auto` | `screen_shot` rendering: `auto` (image when the model accepts images, text otherwise) or `text` |
+| `helperTimeoutMs` | `30000` | Per-helper-call timeout in ms (1..300000) |
+| `maxHelperOutputBytes` | `25165824` | Cap on one helper response in bytes (1024..67108864) |
+| `maxScreenshotSide` | `2560` | Longest screenshot side in pixels (320..7680); larger captures are downscaled |
+| `staleCheckPixels` | `true` | Compare a fresh pixel hash before every action and refuse on change |
+| `maxObservationAgeMs` | `30000` | Maximum age in ms of an observation an action may cite (1000..600000) |
+| `maxCachedObservations` | `8` | LRU cap on cached observations (1..64) |
+| `maxElements` | `500` | Cap on accessibility elements per `screen_read` (1..2000) |
+| `maxTreeDepth` | `32` | Maximum accessibility tree-walk depth (1..64) |
+| `maxTextLength` | `200` | Truncation length for sanitized model-visible strings (16..10000) |
+| `rollbackEnabled` | `true` | Back up and restore control text when `type` fails |
+
+Example override in your profile patch:
+
+```yaml
+- insert:
+    - id: dsh-click
+      name: dsh-click
+      config:
+        requireApproval: true
+        autoApproveWindows: ['^Notepad']
+        focusFallback: never
+```
+
+## Tools & surfaces
+
+| Tool | Read-only | Needs approval | Notes |
+|---|---|---|---|
+| `screen_shot` | ✅ | — | Returns an `observationId` later actions cite in `basedOn`; image attachment when the model accepts images |
+| `screen_read` | ✅ | — | Accessibility tree + pixel hints; element ids are what actions address |
+| `click` | | ✅ | Exactly one of `elementId` or `(x, y)`; UIA invoke preferred, posted messages fallback |
+| `type` | | ✅ | Value-pattern elements only; backs up and restores control text on failure |
+| `scroll` | | ✅ | Element (scroll pattern) or window (posted wheel) |
+| `key` | | ✅ | Posted key combinations (`"Ctrl+S"`); apps that ignore posted input refuse loudly |
+| `app_list` | ✅ | — | Running applications and their visible windows |
+| `app_launch` | | ✅ | By name or executable path, with optional arguments |
+
+## Permissions & data
+
+- **Permissions**: mutating actions cross the official `ctx.approval` seam — the plugin never re-implements or bypasses it. The allowlist only ever *skips the ask for specific windows*; it cannot disable the freshness or process-identity checks.
+- **Data**: the plugin stores nothing on disk except the screenshots the attachment store keeps (content-addressed, under the harness's own attachment policy). Observations are cached in memory (LRU, bounded). No network requests, no credential storage.
+- **Session log**: `dsh-click/observed` and `dsh-click/action` are log-only audit events carrying sanitized window/process facts — titles, paths, and free text are redacted and length-capped before they are written or shown.
+
+## Security boundaries
+
+- **Observe before act, every time.** Actions must cite a fresh observation; a changed screen (pixel hash) or an expired observation is refused with a model-readable reason demanding re-observation.
+- **Approval is the default.** `requireApproval: true` unless you explicitly opt specific windows in; every action — allowed or not — is audit-logged.
+- **No foreground stealing.** The helper never brings a target window to the foreground (`focusFallback: 'never'` by default); input is delivered through UIA or posted messages so background windows are not disturbed.
+- **Process identity is re-verified** immediately before and after each action; a mid-act process swap fails the outcome (`PROCESS_CHANGED`).
+- **Sanitized output.** Control characters are stripped, tabs collapse, credential-shaped values (keys, tokens, JWTs, bearer headers) are redacted before anything reaches the model or the log.
+- **Fail closed.** Unsupported platforms, a missing subprocess service, or an unavailable helper refuse every call loudly — profiles keep booting everywhere.
+
+## Known limitations
+
+- **Windows first.** macOS and Linux backends are reserved; on those platforms every call fails closed with a clear reason.
+- **Text-only fidelity.** `screen_read` depends on the application exposing UIAutomation; apps without an accessible tree yield pixel hints only. Coordinate clicks remain available.
+- **Posted-input apps.** Some applications ignore posted window messages (games, some Electron surfaces); `key` reports this honestly instead of pretending success.
+- **Session audit on newer harness builds.** The audit events are appended with the two-argument `Session.append` form (the pinned `0.1.0-rc.6` peers have no append-envelope option); on post-rc.6 builds the events are required-on-read, which is fine while this plugin is installed because it declares those event types.
+
+## Development
+
+```sh
+pnpm install        # node ^22.19 || >=24
+pnpm run typecheck  # tsc: src + tests against the local harness checkout
+pnpm run typecheck:ci  # tsc against the published 0.1.0-rc.6 types (no paths)
+pnpm test           # vitest: 56 tests, 8 suites (helper smoke runs on Windows)
+pnpm run build      # tsdown bundle + tsc declarations (lib/)
+pnpm run verify:self-contained  # dependency specs resolve from the registry
+pnpm run verify:artifacts       # built ESM face + native helper present
+pnpm pack           # the published tarball
+```
+
+## Topics
+
+`dsh`, `dsh-plugin`, `deepseek-harness`, `deepseek`, `cordis`, `computer-use`, `windows-automation`, `uiautomation`, `desktop-control`, `screen-reader`
+
+## Contributors
+
+- [@PerryLink](https://github.com/PerryLink) — creator and maintainer: tool surface, action safety boundary, Windows native helper, sanitizers, and the five-language docs.
+
+## License
+
+[Apache License 2.0](LICENSE) © 2026 dsh-click contributors
