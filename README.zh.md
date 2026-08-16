@@ -80,6 +80,8 @@ dsh --profile web --dump-config | grep -A2 'id: dsh-click'
 - **tarball 通道**：在本仓库执行 `pnpm pack`，然后 `dsh plugin --profile web add ./dsh-click-<version>.tgz`。
 - **卸载**：`dsh plugin --profile web remove dsh-click`（或从 profile patch 中删除该行）。
 
+> 如果 pnpm 对本包报 `ERR_PNPM_IGNORED_BUILDS`（esbuild 的平台二进制无害校验），在你的 `pnpm-workspace.yaml` 中加入 `allowBuilds: { esbuild: true }` —— `dsh` CLI 会打印确切片段。
+
 ## 配置
 
 所有可调项都是 Schemastery `Config` 字段（可在 cordis.yml 中修改）。按 id 定向覆盖会替换整行 —— 需要重新声明每个键。`cordis.patch.yml` 内联说明了每个键。

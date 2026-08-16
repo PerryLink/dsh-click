@@ -80,6 +80,8 @@ Then ask the agent to look at a window and act — the approval prompt appears f
 - **tarball channel**: `pnpm pack` in this repo, then `dsh plugin --profile web add ./dsh-click-<version>.tgz`.
 - **uninstall**: `dsh plugin --profile web remove dsh-click` (or remove the row from the profile patch).
 
+> If pnpm reports `ERR_PNPM_IGNORED_BUILDS` for this package (esbuild's harmless platform-binary validation), add `allowBuilds: { esbuild: true }` to your `pnpm-workspace.yaml` — the `dsh` CLI prints the exact snippet.
+
 ## Configuration
 
 All tunables are Schemastery `Config` fields (changeable from cordis.yml). An id-targeted override replaces the whole row — restate every key you need. `cordis.patch.yml` documents each key inline.
