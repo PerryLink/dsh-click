@@ -90,6 +90,7 @@ dsh --profile web --dump-config | grep -A2 'id: dsh-click'
 |---|---|---|
 | `requireApproval` | `true` | 每个变更性操作都过审批；观察类工具从不询问 |
 | `autoApproveWindows` | `[]` | 跳过审批询问的窗口标题/可执行路径正则（仍做新鲜度校验并审计） |
+| `auditSessionEvents` | `true` | 是否向会话追加 `dsh-click/observed`/`dsh-click/action` 审计事件；当 harness 会话读取器不识别这些事件类型时（DeepSeek Harness rc.6/rc.7 静态事件白名单）设为 `false`——含此类事件的日志会拒绝恢复 |
 | `focusFallback` | `never` | 操作是否可在最后手段下把目标窗口带到前台（`never` / `allow`） |
 | `imageMode` | `auto` | `screen_shot` 渲染：`auto`（模型支持图像时附图像，否则文字）或 `text` |
 | `helperTimeoutMs` | `30000` | 每次 helper 调用的超时（毫秒，1..300000） |

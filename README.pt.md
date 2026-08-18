@@ -90,6 +90,7 @@ Todos os ajustes são campos `Config` do Schemastery (alteráveis pelo cordis.ym
 |---|---|---|
 | `requireApproval` | `true` | Proteger toda ação mutante atrás da aprovação; observadores nunca perguntam |
 | `autoApproveWindows` | `[]` | Regex de título de janela/caminho de executável que pulam a pergunta de aprovação (ainda passam por atualidade e auditoria) |
+| `auditSessionEvents` | `true` | Acrescenta eventos de auditoria `dsh-click/observed`/`dsh-click/action` à sessão; defina `false` quando o leitor de sessões do harness não reconhecer esses tipos (lista branca estática do DeepSeek Harness rc.6/rc.7) — um log com eles recusa a retomada |
 | `focusFallback` | `never` | Se uma ação pode trazer a janela alvo ao primeiro plano como último recurso (`never` / `allow`) |
 | `imageMode` | `auto` | Renderização do `screen_shot`: `auto` (imagem quando o modelo aceita imagens, texto caso contrário) ou `text` |
 | `helperTimeoutMs` | `30000` | Tempo limite por chamada ao helper em ms (1..300000) |

@@ -57,6 +57,7 @@ export class ActionExecutor {
 
   /** Append one action audit event; a failed append never changes the outcome. */
   private audit(exec: ToolRunContext, event: ActionEvent): void {
+    if (!this.config.auditSessionEvents) return
     const session = exec.agent?.session
     if (session === undefined) return
     try {

@@ -99,7 +99,8 @@ function observedWindowInfo(info: WindowInfo, maxTextLength: number) {
 }
 
 /** Append the `dsh-click/observed` audit event; a failed append is swallowed. */
-function auditObservation(exec: ToolRunContext, event: ObservedEvent): void {
+function auditObservation(exec: ToolRunContext, event: ObservedEvent, auditSessionEvents = true): void {
+  if (!auditSessionEvents) return
   const session = exec.agent?.session
   if (session === undefined) return
   try {
@@ -256,7 +257,7 @@ export function screenShotTool(services: ToolServices) {
             height: image.height,
           },
         } : {},
-      })
+      }, config.auditSessionEvents)
 
       return {
         ok: true,
@@ -410,7 +411,7 @@ export function screenReadTool(services: ToolServices) {
         executablePath: sanitized.executablePath,
         windowTitle: sanitized.title,
         elementCount: tree.elements.length,
-      })
+      }, config.auditSessionEvents)
       return {
         ok: true,
         observationId: record.id,
