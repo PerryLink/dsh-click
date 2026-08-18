@@ -10,7 +10,7 @@
  * @module dsh-click/test/harness
  */
 
-import { Context } from '@deepseek-ai/cordis'
+import { Context, type Fiber } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import { AttachmentStore, AttachmentId, type ImageAttachmentRef, type SaveImageAttachment } from '@deepseek-ai/dsh-attachment'
 import SessionStore, { SessionId, type Session } from '@deepseek-ai/dsh-session'
@@ -285,6 +285,8 @@ export interface Harness {
   readonly agent: Agent
   readonly backend: DesktopBackend
   readonly subprocess: FakeSubprocessRuntime
+  /** The fiber this plugin was mounted under; dispose it to prove HMR safety. */
+  readonly pluginFiber: Fiber
 }
 
 /**
@@ -337,11 +339,11 @@ export async function mountHarness(options: HarnessOptions = {}): Promise<Harnes
   }
 
   const plugin = await import('../src/index.ts')
-  await ctx.plugin(plugin as unknown as import('@deepseek-ai/cordis').Plugin, options.config ?? {})
+  const pluginFiber = await ctx.plugin(plugin as unknown as import('@deepseek-ai/cordis').Plugin, options.config ?? {})
 
   const subprocess = ctx.get('subprocess') as unknown as FakeSubprocessRuntime
   const agent = makeAgent(session, { provider: 'deepseek', model: 'demo-model' })
-  return { ctx, session, agent, backend, subprocess }
+  return { ctx, session, agent, backend, subprocess, pluginFiber }
 }
 
 /** Re-exported for specs that assemble backend scripts directly. */
