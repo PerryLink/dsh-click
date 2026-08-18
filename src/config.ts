@@ -71,6 +71,15 @@ export interface Config {
   requireApproval?: boolean
   /** Window title or executable-path regexes that skip the approval ask (still audited; default []). */
   autoApproveWindows?: string[]
+  /**
+   * Whether dsh-click session audit events (`dsh-click/observed`/`dsh-click/action`)
+   * are appended to the session log (default true). Set false when the harness
+   * session reader does not recognize these event types (e.g. DeepSeek Harness
+   * rc.6/rc.7 static event whitelist without a plugin registration surface):
+   * a log containing them then refuses resume with
+   * "event type ... unknown to this harness and not marked ignorable".
+   */
+  auditSessionEvents?: boolean
   /** Whether mutating actions may bring the target window to the foreground as a fallback (default 'never'). */
   focusFallback?: FocusFallback
   /** How `screen_shot` renders: image block for vision models, text otherwise (default 'auto'). */
@@ -103,6 +112,8 @@ export interface ResolvedConfig {
   requireApproval: boolean
   /** Compiled allowlist matchers (window title or executable path). */
   autoApproveMatchers: ReadonlyArray<RegExp>
+  /** Whether session audit events are appended to the session log. */
+  auditSessionEvents: boolean
   /** Whether focus fallback is permitted. */
   focusFallback: FocusFallback
   /** Screenshot render mode. */
@@ -133,6 +144,7 @@ export interface ResolvedConfig {
 export const Config: z<Config> = z.object({
   requireApproval: z.boolean().default(true),
   autoApproveWindows: z.array(z.string()).default([]),
+  auditSessionEvents: z.boolean().default(true),
   focusFallback: z.union(['never', 'allow'] as const).default('never'),
   imageMode: z.union(['auto', 'text'] as const).default('auto'),
   helperTimeoutMs: z.number().min(1).max(MAX_HELPER_TIMEOUT_MS).default(DEFAULT_HELPER_TIMEOUT_MS),
@@ -172,6 +184,8 @@ export function resolveConfig(config: Config | undefined): ResolvedConfig {
   if (typeof requireApproval !== 'boolean') invalid('requireApproval', 'must be a boolean')
 
   const autoApproveMatchers = (config?.autoApproveWindows ?? []).map(compileMatcher)
+  const auditSessionEvents = config?.auditSessionEvents ?? true
+  if (typeof auditSessionEvents !== 'boolean') invalid('auditSessionEvents', 'must be a boolean')
 
   const focusFallback = config?.focusFallback ?? 'never'
   if (focusFallback !== 'never' && focusFallback !== 'allow') invalid('focusFallback', 'must be "never" or "allow"')
@@ -228,6 +242,7 @@ export function resolveConfig(config: Config | undefined): ResolvedConfig {
   return Object.freeze({
     requireApproval,
     autoApproveMatchers: Object.freeze(autoApproveMatchers),
+    auditSessionEvents,
     focusFallback,
     imageMode,
     helperTimeoutMs,

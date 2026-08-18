@@ -90,6 +90,7 @@ All tunables are Schemastery `Config` fields (changeable from cordis.yml). An id
 |---|---|---|
 | `requireApproval` | `true` | Gate every mutating action behind approval; observers never ask |
 | `autoApproveWindows` | `[]` | Window-title/executable regexes that skip the approval ask (still freshness-checked and audited) |
+| `auditSessionEvents` | `true` | Append `dsh-click/observed` / `dsh-click/action` session audit events; set `false` when the harness session reader does not recognize these event types (DeepSeek Harness rc.6/rc.7 static event whitelist) — a log containing them refuses resume |
 | `focusFallback` | `never` | Whether an action may bring the target window to the foreground as a last resort (`never` / `allow`) |
 | `imageMode` | `auto` | `screen_shot` rendering: `auto` (image when the model accepts images, text otherwise) or `text` |
 | `helperTimeoutMs` | `30000` | Per-helper-call timeout in ms (1..300000) |
