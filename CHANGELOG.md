@@ -5,11 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.2] - 2026-08-21
 
 ### Added
 
-- `auditSessionEvents` config option (default `true`): set `false` to stop appending `dsh-click/observed` / `dsh-click/action` session audit events. The pinned `0.1.0-rc.6` harness peers have no append-envelope (`ignorable`) option, so the two-argument audit appends land as required-on-read events; harnesses whose session reader uses a static event whitelist (DeepSeek Harness rc.6/rc.7 `KNOWN_SESSION_EVENT_TYPES`) refuse to resume such sessions with "event type ... unknown to this harness and not marked ignorable". Disabling the audit append is the workaround until the harness gains a plugin-event registration surface.
+- `auditSessionEvents` config option (default `true`): set `false` to stop appending `dsh-click/observed` / `dsh-click/action` session audit events. The `0.1.0-rc.6`–`0.1.0-rc.8` harness peers expose no append-envelope (`ignorable`) option for plugin events, so the two-argument audit appends land as required-on-read events; harnesses whose session reader uses a static event whitelist (DeepSeek Harness rc.6–rc.8 `KNOWN_SESSION_EVENT_TYPES`) refuse to resume such sessions with "event type ... unknown to this harness and not marked ignorable". Disabling the audit append is the workaround until the harness gains a plugin-event registration surface.
+
+### Changed
+
+- Harness peers upgraded from `0.1.0-rc.6` to `0.1.0-rc.8`: all `@deepseek-ai/dsh-*` devDependencies pinned to `0.1.0-rc.8`, peerDependencies widened to `>=0.1.0-rc.8 <0.2.0`, and the declared compatibility now targets `0.1.0-rc.8`.
 
 ## [0.1.1] - 2026-08-16
 
