@@ -24,7 +24,7 @@
 
 | Superficie | Estado |
 |---|---|
-| Harness | DeepSeek Harness `0.1.0-rc.6` (compatibilidad declarada para `0.1.0-rc.5`–`0.1.0-rc.6`) |
+| Harness | DeepSeek Harness `0.1.0-rc.8` |
 | Node | `^22.19.0 \|\| >=24.0.0` |
 | Plataformas | **Windows primero** (UIAutomation + entrada Win32, mediante un helper de PowerShell incluido); los backends de macOS/Linux están reservados y fallan cerrado con un motivo claro |
 | Modelo | Modelos solo-texto totalmente compatibles (`screen_read` devuelve texto estructurado); los modelos con visión reciben además las imágenes de `screen_shot` |
@@ -90,7 +90,7 @@ Todos los ajustes son campos `Config` de Schemastery (modificables desde cordis.
 |---|---|---|
 | `requireApproval` | `true` | Proteger cada acción que muta tras la aprobación; los observadores nunca preguntan |
 | `autoApproveWindows` | `[]` | Regex de título de ventana/ruta de ejecutable que saltan la pregunta de aprobación (siguen con verificación de frescura y auditoría) |
-| `auditSessionEvents` | `true` | Añade eventos de auditoría `dsh-click/observed`/`dsh-click/action` a la sesión; ponlo en `false` cuando el lector de sesiones del harness no reconozca estos tipos (lista blanca estática de DeepSeek Harness rc.6/rc.7) — un log con ellos rechaza la reanudación |
+| `auditSessionEvents` | `true` | Añade eventos de auditoría `dsh-click/observed`/`dsh-click/action` a la sesión; ponlo en `false` cuando el lector de sesiones del harness no reconozca estos tipos (lista blanca estática de DeepSeek Harness rc.6–rc.8) — un log con ellos rechaza la reanudación |
 | `focusFallback` | `never` | Si una acción puede traer la ventana objetivo al primer plano como último recurso (`never` / `allow`) |
 | `imageMode` | `auto` | Renderizado de `screen_shot`: `auto` (imagen si el modelo acepta imágenes, texto en caso contrario) o `text` |
 | `helperTimeoutMs` | `30000` | Tiempo de espera por llamada al helper en ms (1..300000) |
@@ -149,14 +149,14 @@ Ejemplo de sobrescritura en el parche de tu perfil:
 - **Windows primero.** Los backends de macOS y Linux están reservados; en esas plataformas cada llamada falla cerrado con un motivo claro.
 - **Fidelidad solo-texto.** `screen_read` depende de que la aplicación exponga UIAutomation; las apps sin árbol accesible solo ofrecen pistas de píxeles. Los clics por coordenadas siguen disponibles.
 - **Apps de entrada enviada.** Algunas aplicaciones ignoran los mensajes de ventana enviados (juegos, algunas superficies Electron); `key` lo informa con honestidad en lugar de fingir éxito.
-- **Auditoría de sesión en builds más nuevos.** Los eventos de auditoría usan la forma de dos argumentos de `Session.append` (los peers fijados `0.1.0-rc.6` no tienen opción de envoltura de append); en builds posteriores a rc.6 los eventos son required-on-read, lo cual no es problema mientras este plugin esté instalado porque declara esos tipos de evento.
+- **Auditoría de sesión en builds del harness hasta rc.8.** Los eventos de auditoría usan la forma de dos argumentos de `Session.append` (los peers `0.1.0-rc.6`–`0.1.0-rc.8` no exponen opción de envoltura de append para eventos de plugin); en esos builds los eventos son required-on-read, y un lector de sesiones de lista blanca estática (rc.6–rc.8 `KNOWN_SESSION_EVENT_TYPES`) rechaza reanudar un log que los contenga salvo que `auditSessionEvents` sea `false`.
 
 ## Desarrollo
 
 ```sh
 pnpm install        # node ^22.19 || >=24
 pnpm run typecheck  # tsc: src + tests contra el checkout local del harness
-pnpm run typecheck:ci  # tsc contra los tipos publicados 0.1.0-rc.6 (sin paths)
+pnpm run typecheck:ci  # tsc contra los tipos publicados 0.1.0-rc.8 (sin paths)
 pnpm test           # vitest: 56 tests, 8 suites (el smoke del helper corre en Windows)
 pnpm run build      # bundle tsdown + declaraciones tsc (lib/)
 pnpm run verify:self-contained  # las especificaciones de dependencias resuelven desde el registry

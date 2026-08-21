@@ -24,7 +24,7 @@
 
 | Surface | Status |
 |---|---|
-| Harness | DeepSeek Harness `0.1.0-rc.6` (compat declared for `0.1.0-rc.5`–`0.1.0-rc.6`) |
+| Harness | DeepSeek Harness `0.1.0-rc.8` |
 | Node | `^22.19.0 \|\| >=24.0.0` |
 | Platforms | **Windows first** (UIAutomation + Win32 input, via a bundled PowerShell helper); macOS/Linux backends are reserved and fail closed with a clear reason |
 | Model | Text-only models fully supported (`screen_read` returns structured text); vision models additionally get `screen_shot` images |
@@ -90,7 +90,7 @@ All tunables are Schemastery `Config` fields (changeable from cordis.yml). An id
 |---|---|---|
 | `requireApproval` | `true` | Gate every mutating action behind approval; observers never ask |
 | `autoApproveWindows` | `[]` | Window-title/executable regexes that skip the approval ask (still freshness-checked and audited) |
-| `auditSessionEvents` | `true` | Append `dsh-click/observed` / `dsh-click/action` session audit events; set `false` when the harness session reader does not recognize these event types (DeepSeek Harness rc.6/rc.7 static event whitelist) — a log containing them refuses resume |
+| `auditSessionEvents` | `true` | Append `dsh-click/observed` / `dsh-click/action` session audit events; set `false` when the harness session reader does not recognize these event types (DeepSeek Harness rc.6–rc.8 static event whitelist) — a log containing them refuses resume |
 | `focusFallback` | `never` | Whether an action may bring the target window to the foreground as a last resort (`never` / `allow`) |
 | `imageMode` | `auto` | `screen_shot` rendering: `auto` (image when the model accepts images, text otherwise) or `text` |
 | `helperTimeoutMs` | `30000` | Per-helper-call timeout in ms (1..300000) |
@@ -149,14 +149,14 @@ Example override in your profile patch:
 - **Windows first.** macOS and Linux backends are reserved; on those platforms every call fails closed with a clear reason.
 - **Text-only fidelity.** `screen_read` depends on the application exposing UIAutomation; apps without an accessible tree yield pixel hints only. Coordinate clicks remain available.
 - **Posted-input apps.** Some applications ignore posted window messages (games, some Electron surfaces); `key` reports this honestly instead of pretending success.
-- **Session audit on newer harness builds.** The audit events are appended with the two-argument `Session.append` form (the pinned `0.1.0-rc.6` peers have no append-envelope option); on post-rc.6 builds the events are required-on-read, which is fine while this plugin is installed because it declares those event types.
+- **Session audit on harness builds through rc.8.** The audit events are appended with the two-argument `Session.append` form (the `0.1.0-rc.6`–`0.1.0-rc.8` peers expose no append-envelope option for plugin events); on those builds the events are required-on-read, and a static-whitelist session reader (rc.6–rc.8 `KNOWN_SESSION_EVENT_TYPES`) refuses to resume a log containing them unless `auditSessionEvents` is `false`.
 
 ## Development
 
 ```sh
 pnpm install        # node ^22.19 || >=24
 pnpm run typecheck  # tsc: src + tests against the local harness checkout
-pnpm run typecheck:ci  # tsc against the published 0.1.0-rc.6 types (no paths)
+pnpm run typecheck:ci  # tsc against the published 0.1.0-rc.8 types (no paths)
 pnpm test           # vitest: 56 tests, 8 suites (helper smoke runs on Windows)
 pnpm run build      # tsdown bundle + tsc declarations (lib/)
 pnpm run verify:self-contained  # dependency specs resolve from the registry

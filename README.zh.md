@@ -24,7 +24,7 @@
 
 | 方面 | 状态 |
 |---|---|
-| Harness | DeepSeek Harness `0.1.0-rc.6`（声明兼容 `0.1.0-rc.5`–`0.1.0-rc.6`） |
+| Harness | DeepSeek Harness `0.1.0-rc.8` |
 | Node | `^22.19.0 \|\| >=24.0.0` |
 | 平台 | **Windows 优先**（UIAutomation + Win32 输入，经由内置 PowerShell 辅助进程）；macOS/Linux 后端已预留，失败时以明确原因关闭 |
 | 模型 | 纯文本模型完整可用（`screen_read` 输出结构化文本）；视觉模型额外获得 `screen_shot` 图像 |
@@ -90,7 +90,7 @@ dsh --profile web --dump-config | grep -A2 'id: dsh-click'
 |---|---|---|
 | `requireApproval` | `true` | 每个变更性操作都过审批；观察类工具从不询问 |
 | `autoApproveWindows` | `[]` | 跳过审批询问的窗口标题/可执行路径正则（仍做新鲜度校验并审计） |
-| `auditSessionEvents` | `true` | 是否向会话追加 `dsh-click/observed`/`dsh-click/action` 审计事件；当 harness 会话读取器不识别这些事件类型时（DeepSeek Harness rc.6/rc.7 静态事件白名单）设为 `false`——含此类事件的日志会拒绝恢复 |
+| `auditSessionEvents` | `true` | 是否向会话追加 `dsh-click/observed`/`dsh-click/action` 审计事件；当 harness 会话读取器不识别这些事件类型时（DeepSeek Harness rc.6–rc.8 静态事件白名单）设为 `false`——含此类事件的日志会拒绝恢复 |
 | `focusFallback` | `never` | 操作是否可在最后手段下把目标窗口带到前台（`never` / `allow`） |
 | `imageMode` | `auto` | `screen_shot` 渲染：`auto`（模型支持图像时附图像，否则文字）或 `text` |
 | `helperTimeoutMs` | `30000` | 每次 helper 调用的超时（毫秒，1..300000） |
@@ -149,14 +149,14 @@ profile patch 中的覆盖示例：
 - **Windows 优先。** macOS 与 Linux 后端已预留；在这些平台上每次调用都以明确原因失败关闭。
 - **纯文本保真度。** `screen_read` 依赖应用暴露 UIAutomation；没有无障碍树的应用只有像素提示。坐标点击仍然可用。
 - **post 输入类应用。** 部分应用忽略 post 窗口消息（游戏、部分 Electron 界面）；`key` 会如实报告而非假装成功。
-- **较新 harness 构建上的会话审计。** 审计事件使用两参数 `Session.append` 形式（钉住的 `0.1.0-rc.6` peers 没有 append envelope 选项）；在 post-rc.6 构建上事件为 required-on-read，只要安装了本插件即无碍，因为本插件声明了这些事件类型。
+- **rc.8 及更早 harness 构建上的会话审计。** 审计事件使用两参数 `Session.append` 形式（`0.1.0-rc.6`–`0.1.0-rc.8` peers 未对插件事件开放 append envelope 选项）；在这些构建上事件为 required-on-read，静态白名单会话读取器（rc.6–rc.8 `KNOWN_SESSION_EVENT_TYPES`）会拒绝恢复含此类事件的日志，除非 `auditSessionEvents` 设为 `false`。
 
 ## 开发
 
 ```sh
 pnpm install        # node ^22.19 || >=24
 pnpm run typecheck  # tsc：src + tests，对照本地 harness checkout
-pnpm run typecheck:ci  # tsc：对照已发布的 0.1.0-rc.6 类型（无 paths）
+pnpm run typecheck:ci  # tsc：对照已发布的 0.1.0-rc.8 类型（无 paths）
 pnpm test           # vitest：56 个测试、8 个套件（helper 冒烟在 Windows 上运行）
 pnpm run build      # tsdown bundle + tsc 声明（lib/）
 pnpm run verify:self-contained  # 依赖声明全部来自 registry

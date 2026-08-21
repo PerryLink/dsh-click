@@ -24,7 +24,7 @@
 
 | Superfície | Status |
 |---|---|
-| Harness | DeepSeek Harness `0.1.0-rc.6` (compatibilidade declarada para `0.1.0-rc.5`–`0.1.0-rc.6`) |
+| Harness | DeepSeek Harness `0.1.0-rc.8` |
 | Node | `^22.19.0 \|\| >=24.0.0` |
 | Plataformas | **Windows primeiro** (UIAutomation + entrada Win32, via um helper PowerShell embutido); os backends macOS/Linux estão reservados e falham fechado com um motivo claro |
 | Modelo | Modelos somente texto totalmente suportados (`screen_read` retorna texto estruturado); modelos com visão recebem também as imagens do `screen_shot` |
@@ -90,7 +90,7 @@ Todos os ajustes são campos `Config` do Schemastery (alteráveis pelo cordis.ym
 |---|---|---|
 | `requireApproval` | `true` | Proteger toda ação mutante atrás da aprovação; observadores nunca perguntam |
 | `autoApproveWindows` | `[]` | Regex de título de janela/caminho de executável que pulam a pergunta de aprovação (ainda passam por atualidade e auditoria) |
-| `auditSessionEvents` | `true` | Acrescenta eventos de auditoria `dsh-click/observed`/`dsh-click/action` à sessão; defina `false` quando o leitor de sessões do harness não reconhecer esses tipos (lista branca estática do DeepSeek Harness rc.6/rc.7) — um log com eles recusa a retomada |
+| `auditSessionEvents` | `true` | Acrescenta eventos de auditoria `dsh-click/observed`/`dsh-click/action` à sessão; defina `false` quando o leitor de sessões do harness não reconhecer esses tipos (lista branca estática do DeepSeek Harness rc.6–rc.8) — um log com eles recusa a retomada |
 | `focusFallback` | `never` | Se uma ação pode trazer a janela alvo ao primeiro plano como último recurso (`never` / `allow`) |
 | `imageMode` | `auto` | Renderização do `screen_shot`: `auto` (imagem quando o modelo aceita imagens, texto caso contrário) ou `text` |
 | `helperTimeoutMs` | `30000` | Tempo limite por chamada ao helper em ms (1..300000) |
@@ -149,14 +149,14 @@ Exemplo de sobrescrita no patch do seu perfil:
 - **Windows primeiro.** Os backends macOS e Linux estão reservados; nessas plataformas cada chamada falha fechado com um motivo claro.
 - **Fidelidade somente texto.** O `screen_read` depende de o aplicativo expor UIAutomation; apps sem árvore acessível oferecem apenas dicas de pixels. Cliques por coordenadas continuam disponíveis.
 - **Apps de entrada postada.** Alguns aplicativos ignoram mensagens de janela postadas (jogos, algumas superfícies Electron); o `key` informa isso com honestidade em vez de fingir sucesso.
-- **Auditoria de sessão em builds mais novos.** Os eventos de auditoria usam a forma de dois argumentos de `Session.append` (os peers fixados `0.1.0-rc.6` não têm opção de envelope de append); em builds pós-rc.6 os eventos são required-on-read, o que não é problema enquanto este plugin estiver instalado, pois ele declara esses tipos de evento.
+- **Auditoria de sessão em builds do harness até rc.8.** Os eventos de auditoria usam a forma de dois argumentos de `Session.append` (os peers `0.1.0-rc.6`–`0.1.0-rc.8` não expõem opção de envelope de append para eventos de plugin); nesses builds os eventos são required-on-read, e um leitor de sessões de lista branca estática (rc.6–rc.8 `KNOWN_SESSION_EVENT_TYPES`) recusa retomar um log que os contenha salvo se `auditSessionEvents` for `false`.
 
 ## Desenvolvimento
 
 ```sh
 pnpm install        # node ^22.19 || >=24
 pnpm run typecheck  # tsc: src + tests contra o checkout local do harness
-pnpm run typecheck:ci  # tsc contra os tipos publicados 0.1.0-rc.6 (sem paths)
+pnpm run typecheck:ci  # tsc contra os tipos publicados 0.1.0-rc.8 (sem paths)
 pnpm test           # vitest: 56 testes, 8 suítes (o smoke do helper roda no Windows)
 pnpm run build      # bundle tsdown + declarações tsc (lib/)
 pnpm run verify:self-contained  # especificações de dependências resolvem pelo registry

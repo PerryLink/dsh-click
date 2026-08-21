@@ -16,7 +16,7 @@ Standalone DeepSeek Harness plugin repository (`dsh-click`). Development follows
 - `src/platform/runner.ts` — `HelperBackend`: spawns `native/win32/dsh-click-helper.ps1` through `ctx.subprocess`, JSON request on stdin / JSON response on stdout, deadline- and signal-bounded.
 - `src/platform/selection.ts` — `createBackend`: Windows + `ctx.subprocess` → `HelperBackend`; everything else is an unavailable backend that fails closed with a model-readable reason (profiles keep booting everywhere).
 - `native/win32/dsh-click-helper.ps1` — the PowerShell helper: UIAutomation reads and posted input, no foreground stealing, JSON protocol (`HELPER_PROTOCOL_VERSION`).
-- `tests/` — vitest; real Cordis `Context` + real `SessionStore`/`Session`/`ToolRuntime`/`ApprovalService` from the `0.1.0-rc.6` peers; the desktop backend and subprocess are scripted fakes (the subprocess fake is a subclass of the REAL `SubprocessRuntime`), and the helper smoke test runs the real PowerShell helper end to end on Windows only.
+- `tests/` — vitest; real Cordis `Context` + real `SessionStore`/`Session`/`ToolRuntime`/`ApprovalService` from the `0.1.0-rc.8` peers; the desktop backend and subprocess are scripted fakes (the subprocess fake is a subclass of the REAL `SubprocessRuntime`), and the helper smoke test runs the real PowerShell helper end to end on Windows only.
 
 ## Hard rules applied here
 
@@ -25,7 +25,7 @@ Standalone DeepSeek Harness plugin repository (`dsh-click`). Development follows
 - **Approval first, allowlist explicit.** Mutating actions cross `ctx.approval` by default (`requireApproval: true`); only window-title/executable regexes from `autoApproveWindows` skip the ask, and those actions are still freshness-checked, process-verified, and audit-logged.
 - **No foreground stealing.** The helper never brings a target window to the foreground; `focusFallback: 'allow'` is the only sanctioned escape hatch and stays `'never'` by default.
 - **Process identity before and after.** Each action verifies pid + executable path around the act; a change throws `PROCESS_CHANGED` and the audit event records both facts.
-- **Model-visible ⟺ logged.** The only model-visible plugin content is the sanitized tool output and the audit facts appended to the session log (`dsh-click/observed`, `dsh-click/action`); those appends are two-argument on purpose — the pinned `0.1.0-rc.6` peers have no append-envelope (`ignorable`) option, and the two-argument form typechecks against both rc.6 and newer harness builds. On post-rc.6 hosts the events are required-on-read; since the types are declared by this package, sessions load fine when the plugin is installed.
+- **Model-visible ⟺ logged.** The only model-visible plugin content is the sanitized tool output and the audit facts appended to the session log (`dsh-click/observed`, `dsh-click/action`); those appends are two-argument on purpose — the `0.1.0-rc.6`–`0.1.0-rc.8` peers expose no append-envelope (`ignorable`) option for plugin events, and the two-argument form typechecks against both rc.6 and rc.8 builds. On rc.6–rc.8 hosts the events are required-on-read; the static `KNOWN_SESSION_EVENT_TYPES` whitelist refuses to resume a log containing them, so `auditSessionEvents: false` is the workaround for such harnesses (documented in the README config table).
 - **Audit never flips outcomes.** A failed audit append is swallowed — the tool result still carries the model-visible content.
 - **Waterfall discipline.** This plugin registers no waterfall listeners today; if it ever does, allow/passthrough MUST call `next()` and only a deliberate deny/ask may short-circuit.
 - **Loud misconfiguration.** Invalid regexes in `autoApproveWindows`, out-of-bounds numbers, and unknown enum members fail `resolveConfig` at load, never silently.
@@ -34,7 +34,7 @@ Standalone DeepSeek Harness plugin repository (`dsh-click`). Development follows
 
 `pnpm run typecheck && pnpm run typecheck:ci && pnpm test && pnpm run build && pnpm run verify:self-contained && pnpm run verify:artifacts && pnpm pack`
 
-- `typecheck` resolves `@deepseek-ai/*` through tsconfig paths to the local harness checkout; `typecheck:ci` clears the paths and checks against the published `0.1.0-rc.6` types. Both must stay green — the package ships against rc.6, and the two typings differ (e.g. `Session.append` gained its optional envelope argument after rc.6).
+- `typecheck` resolves `@deepseek-ai/*` through tsconfig paths to the local harness checkout; `typecheck:ci` clears the paths and checks against the published `0.1.0-rc.8` types. Both must stay green — the package ships against rc.8.
 - `verify:artifacts` also proves the tarball's ESM face imports under plain Node and that the native helper ships.
 
 ## Release
