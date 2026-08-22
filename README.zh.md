@@ -24,7 +24,7 @@
 
 | 方面 | 状态 |
 |---|---|
-| Harness | DeepSeek Harness `0.1.0-rc.8` |
+| Harness | DeepSeek Harness `0.1.1-rc.2` |
 | Node | `^22.19.0 \|\| >=24.0.0` |
 | 平台 | **Windows 优先**（UIAutomation + Win32 输入，经由内置 PowerShell 辅助进程）；macOS/Linux 后端已预留，失败时以明确原因关闭 |
 | 模型 | 纯文本模型完整可用（`screen_read` 输出结构化文本）；视觉模型额外获得 `screen_shot` 图像 |
@@ -156,7 +156,7 @@ profile patch 中的覆盖示例：
 ```sh
 pnpm install        # node ^22.19 || >=24
 pnpm run typecheck  # tsc：src + tests，对照本地 harness checkout
-pnpm run typecheck:ci  # tsc：对照已发布的 0.1.0-rc.8 类型（无 paths）
+pnpm run typecheck:ci  # tsc：对照已发布的 0.1.1-rc.2 类型（无 paths）
 pnpm test           # vitest：56 个测试、8 个套件（helper 冒烟在 Windows 上运行）
 pnpm run build      # tsdown bundle + tsc 声明（lib/）
 pnpm run verify:self-contained  # 依赖声明全部来自 registry

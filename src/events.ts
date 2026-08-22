@@ -1,9 +1,9 @@
 /**
  * Session audit events for dsh-click (declaration merging into the harness's
- * `SessionEventMap`). Both events are log-only; on harness builds that support
- * the append envelope they should be marked `ignorable` (the pinned peer
- * 0.1.0-rc.6 has no envelope option, so the append stays two-argument and
- * remains compatible with both). Tool arguments and rendered results are
+ * `SessionEventMap`). Both events are log-only; the two-argument
+ * `Session.append` form is retained because the published peers (through
+ * 0.1.1-rc.2) expose no append-envelope (`ignorable`) option for plugin
+ * events, so the two-argument form typechecks and runs across the line. Tool arguments and rendered results are
  * already logged by the tool runtime as `tool/call` + `tool/result`; these
  * events carry the observation and action facts that exist outside them:
  * window identity, process identity, and the approval/outcome audit trail.

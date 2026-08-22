@@ -14,7 +14,7 @@ published tarball; these are install-time dependencies:
 | [typescript](https://github.com/microsoft/TypeScript) | `^5.9.0` | Apache-2.0 | Build-time declaration emission (`lib/types/`) |
 | [@deepseek-ai/cordis](https://www.npmjs.com/package/@deepseek-ai/cordis) | `^4.0.1` (peer) | See package | The plugin runtime |
 | [@deepseek-ai/schemastery](https://www.npmjs.com/package/@deepseek-ai/schemastery) | `^3.18.0` (peer) | See package | Configuration schema |
-| `@deepseek-ai/dsh-*` peers | `0.1.0-rc.8` (peer) | See packages | Official harness seams (`dsh-tools`, `dsh-session`, `dsh-subprocess`, `dsh-llm`, `dsh-attachment`, `dsh-agent`, `dsh-user-approval`) |
+| `@deepseek-ai/dsh-*` peers | `0.1.1-rc.2` (peer) | See packages | Official harness seams (`dsh-tools`, `dsh-session`, `dsh-subprocess`, `dsh-llm`, `dsh-attachment`, `dsh-agent`, `dsh-user-approval`) |
 
 At runtime the plugin only talks to the harness services listed as
 peerDependencies; it performs no network requests of its own.

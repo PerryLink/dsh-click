@@ -1,6 +1,6 @@
 /**
  * Shared test harness: REAL Cordis `Context`, REAL `SessionStore`/`Session`,
- * REAL `ToolRuntime`, REAL `ApprovalService` from the 0.1.0-rc.6 peers — plus
+ * REAL `ToolRuntime`, REAL `ApprovalService` from the 0.1.1-rc.2 peers — plus
  * an in-memory desktop backend, an in-memory subprocess provider (a subclass
  * of the REAL `SubprocessRuntime`), a fake attachment store, and a
  * structurally complete fake agent (the harness driver class, not a service).
