@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Harness peers upgraded from `0.1.0-rc.8` to `0.1.1-rc.2`: all `@deepseek-ai/dsh-*` devDependencies pinned to `0.1.1-rc.2`, `dshWorkshop.compatibility.dshVersions` targets `0.1.1-rc.2`, and the CI/Compat workflow pins (`@deepseek-ai/dsh`, `dsh-base`, `dsh-headless`, published-types typecheck) moved to `0.1.1-rc.2`. peerDependencies stay `>=0.1.0-rc.8 <0.2.0` (no 0.1.1-rc.2-only API is required).
+- Verified the `dsh-attachment` seam against 0.1.1-rc.2: `saveImage` still returns the canonical `ImageAttachmentRef` (`attachmentId`/`mediaType`/`bytes`/`width`/`height`) and the `ImageAttachmentLimits` six-field shape (`maxImageBytes`, `maxImagesPerMessage`, `maxMessageImageBytes`, `maxImagePixels`, `maxImageDimension`, `mediaTypes`) is unchanged for consumers; no source change was required.
+
 ## [0.1.2] - 2026-08-21
 
 ### Added

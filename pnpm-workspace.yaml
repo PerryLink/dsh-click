@@ -9,7 +9,7 @@ packages:
 # (ERR_PNPM_IGNORED_BUILDS); the builds below are required for this package
 # (esbuild: tsdown bundling; node-pty + dsh-subprocess-local: the Windows
 # helper smoke test; koffi: native FFI used by @deepseek-ai/dsh-subprocess-local
-# since the 0.1.0-rc.8 peers). pnpm's isolated prepare env for git-hosted
+# since the 0.1.1-rc.2 peers). pnpm's isolated prepare env for git-hosted
 # installs also reads this file, so the git channel stays installable.
 allowBuilds:
   esbuild: true
