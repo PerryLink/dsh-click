@@ -1,6 +1,7 @@
 <div align="center">
 
 # 🖱️ dsh-click
+[![Gitee](https://img.shields.io/badge/Gitee-mirror-c71d23?logo=gitee)](https://gitee.com/perrylink/dsh-click)
 
 **Cross-platform native desktop control for DeepSeek Harness — Windows first.**
 
