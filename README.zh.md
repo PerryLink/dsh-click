@@ -171,6 +171,7 @@ pnpm pack           # 发布用 tarball
 ## Contributors
 
 - [@PerryLink](https://github.com/PerryLink) —— 创建者与维护者：工具面、操作安全边界、Windows 原生 helper、脱敏层与五语文档。
+- [@Mchsd](https://github.com/Mchsd) —— 新增 `auditSessionEvents` 开关，供会话读取器拒绝 `dsh-click` 审计事件的主机退出审计追加（#2）。
 
 ## PerryLink DSH Plugin Family
 

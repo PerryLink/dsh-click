@@ -171,6 +171,7 @@ pnpm pack           # o tarball publicado
 ## Contributors
 
 - [@PerryLink](https://github.com/PerryLink) — criador e mantenedor: superfície de ferramentas, fronteira de segurança das ações, helper nativo do Windows, sanitizadores e a documentação em cinco idiomas.
+- [@Mchsd](https://github.com/Mchsd) — adicionou a opção `auditSessionEvents` para harnesses cujo leitor de sessão rejeita os eventos de auditoria do `dsh-click` (#2).
 
 ## PerryLink DSH Plugin Family
 

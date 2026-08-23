@@ -172,6 +172,7 @@ pnpm pack           # the published tarball
 ## Contributors
 
 - [@PerryLink](https://github.com/PerryLink) — creator and maintainer: tool surface, action safety boundary, Windows native helper, sanitizers, and the five-language docs.
+- [@Mchsd](https://github.com/Mchsd) — added the `auditSessionEvents` opt-out for harnesses whose session reader rejects the `dsh-click` audit events (#2).
 
 ## PerryLink DSH Plugin Family
 
