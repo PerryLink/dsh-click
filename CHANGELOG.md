@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Three-interface assertions (model schema + canonical value + content blocks) for `screen_shot` and `click`, completing the U2 tool-surface coverage alongside the existing `screen_read` assertion.
+
 ## [0.1.3] - 2026-08-22
 
 ### Changed

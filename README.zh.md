@@ -157,7 +157,7 @@ profile patch 中的覆盖示例：
 pnpm install        # node ^22.19 || >=24
 pnpm run typecheck  # tsc：src + tests，对照本地 harness checkout
 pnpm run typecheck:ci  # tsc：对照已发布的 0.1.1-rc.2 类型（无 paths）
-pnpm test           # vitest：56 个测试、8 个套件（helper 冒烟在 Windows 上运行）
+pnpm test           # vitest：66 个测试、11 个文件（helper 冒烟在 Windows 上运行）
 pnpm run build      # tsdown bundle + tsc 声明（lib/）
 pnpm run verify:self-contained  # 依赖声明全部来自 registry
 pnpm run verify:artifacts       # 构建产物 ESM 面 + 原生 helper 齐全
