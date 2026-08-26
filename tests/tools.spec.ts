@@ -52,10 +52,10 @@ function shotFixture(): Screenshot {
   }
 }
 
-const TOOL_NAMES = ['screen_shot', 'screen_read', 'click', 'type', 'scroll', 'key', 'app_list', 'app_launch']
+const TOOL_NAMES = ['screen_shot', 'screen_read', 'screen_find', 'click', 'type', 'scroll', 'key', 'app_list', 'app_launch']
 
 describe('registration', () => {
-  it('registers all eight tools', async () => {
+  it('registers all nine tools', async () => {
     const harness = await mountHarness()
     for (const name of TOOL_NAMES) {
       expect(harness.ctx.tools.get(name)).toBeDefined()
@@ -183,12 +183,53 @@ describe('app_list', () => {
   })
 })
 
+describe('screen_find', () => {
+  it('runs OCR and returns screen-coordinate text targets with an observationId', async () => {
+    const harness = await mountHarness()
+    const backend = harness.backend as FakeDesktopBackend
+    backend.shotResult = shotFixture()
+    harness.subprocess.nextExitCode = 0
+    harness.subprocess.nextStdout = [
+      'level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext',
+      '5\t1\t1\t1\t1\t1\t10\t20\t50\t10\t96.5\tSave',
+    ].join('\n')
+
+    const result = await callTool(harness, 'screen_find', {})
+    expect(result.isError).toBe(false)
+    if (result.isError) return
+    const value = result.value as { ocrAvailable: boolean; targets: Array<{ text: string; x: number; y: number; source: string }> }
+    expect(value.ocrAvailable).toBe(true)
+    expect(value.targets).toHaveLength(1)
+    expect(value.targets[0]).toMatchObject({ text: 'Save', x: 45, y: 45, source: 'ocr' })
+  })
+
+  it('filters OCR targets by a query substring', async () => {
+    const harness = await mountHarness()
+    const backend = harness.backend as FakeDesktopBackend
+    backend.shotResult = shotFixture()
+    harness.subprocess.nextExitCode = 0
+    harness.subprocess.nextStdout = [
+      'level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext',
+      '5\t1\t1\t1\t1\t1\t10\t20\t50\t10\t96.5\tSave',
+      '5\t1\t1\t1\t1\t2\t70\t20\t40\t10\t91\tOpen',
+    ].join('\n')
+
+    const result = await callTool(harness, 'screen_find', { query: 'open' })
+    expect(result.isError).toBe(false)
+    if (result.isError) return
+    const value = result.value as { targets: Array<{ text: string }> }
+    expect(value.targets).toHaveLength(1)
+    expect(value.targets[0]?.text).toBe('Open')
+  })
+})
+
 describe('unavailable backend', () => {
   it('fails closed with a model-readable reason on every tool', async () => {
     const harness = await mountHarness({ backend: new UnavailableBackend('linux', 'reserved but not implemented') })
     const MINIMAL_ARGS: Record<string, unknown> = {
       screen_shot: {},
       screen_read: {},
+      screen_find: {},
       click: { basedOn: { observationId: 'x', windowId: 1 }, target: { x: 0, y: 0 } },
       type: { basedOn: { observationId: 'x', windowId: 1 }, elementId: 'e', text: 't' },
       scroll: { basedOn: { observationId: 'x', windowId: 1 }, direction: 'down' },

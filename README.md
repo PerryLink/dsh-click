@@ -104,6 +104,7 @@ All tunables are Schemastery `Config` fields (changeable from cordis.yml). An id
 | `maxTreeDepth` | `32` | Maximum accessibility tree-walk depth (1..64) |
 | `maxTextLength` | `200` | Truncation length for sanitized model-visible strings (16..10000) |
 | `rollbackEnabled` | `true` | Back up and restore control text when `type` fails |
+| `ocr.enabled` / `command` / `language` | `true` / `tesseract` / `eng` | Optional OCR for the `screen_find` path (probed at mount; degrades to unavailable when tesseract is absent) |
 
 Example override in your profile patch:
 

@@ -51,3 +51,12 @@
         # Back up and restore control text when `type` fails (true = restore
         # the original text; false = leave the partially typed text).
         rollbackEnabled: true
+        # Optical character recognition for windows without a UIA tree.
+        ocr:
+          # Enable the OCR path in screen_find (true = probe tesseract at
+          # mount and use it when available).
+          enabled: true
+          # tesseract executable name.
+          command: tesseract
+          # tesseract language tag.
+          language: eng

@@ -103,6 +103,7 @@ dsh --profile web --dump-config | grep -A2 'id: dsh-click'
 | `maxTreeDepth` | `32` | 无障碍树遍历最大深度（1..64） |
 | `maxTextLength` | `200` | 脱敏后模型可见字符串的截断长度（16..10000） |
 | `rollbackEnabled` | `true` | `type` 失败时备份并还原控件文本 |
+| `ocr.enabled` / `command` / `language` | `true` / `tesseract` / `eng` | `screen_find` 的可选 OCR（挂载时探测；无 tesseract 时降级为不可用） |
 
 profile patch 中的覆盖示例：
 

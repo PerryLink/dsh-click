@@ -65,6 +65,22 @@ export const DEFAULT_MAX_TEXT_LENGTH = 200
 /** Ceiling on the sanitization truncation length. */
 export const MAX_TEXT_LENGTH = 10_000
 
+/** Default tesseract executable for the optional OCR path. */
+export const DEFAULT_OCR_COMMAND = 'tesseract'
+
+/** Default OCR language (tesseract language data). */
+export const DEFAULT_OCR_LANGUAGE = 'eng'
+
+/** Optical character recognition (optional; probed at mount). */
+export interface OcrConfig {
+  /** Enable OCR-based text finding when a window has no UIA tree (default true). */
+  enabled?: boolean
+  /** tesseract executable name (default "tesseract"). */
+  command?: string
+  /** tesseract language tag (default "eng"). */
+  language?: string
+}
+
 /** Configuration for the dsh-click desktop-control tools. */
 export interface Config {
   /** Gate every mutating action (click/type/scroll/key/app_launch) behind approval (default true). */
@@ -104,6 +120,8 @@ export interface Config {
   maxTextLength?: number
   /** Back up and restore control text when `type` fails (default true). */
   rollbackEnabled?: boolean
+  /** Optical character recognition (optional; probed at mount). */
+  ocr?: OcrConfig
 }
 
 /** Fully resolved configuration captured at plugin load. */
@@ -138,6 +156,8 @@ export interface ResolvedConfig {
   maxTextLength: number
   /** Whether `type` backs up and restores control text on failure. */
   rollbackEnabled: boolean
+  /** OCR configuration (probed at mount). */
+  ocr: { enabled: boolean; command: string; language: string }
 }
 
 /** Schemastery schema for loader-validated configuration. */
@@ -157,6 +177,11 @@ export const Config: z<Config> = z.object({
   maxTreeDepth: z.number().min(1).max(MAX_TREE_DEPTH).default(DEFAULT_MAX_TREE_DEPTH),
   maxTextLength: z.number().min(16).max(MAX_TEXT_LENGTH).default(DEFAULT_MAX_TEXT_LENGTH),
   rollbackEnabled: z.boolean().default(true),
+  ocr: z.object({
+    enabled: z.boolean().default(true),
+    command: z.string().min(1).max(256).default(DEFAULT_OCR_COMMAND),
+    language: z.string().min(1).max(32).default(DEFAULT_OCR_LANGUAGE),
+  }),
 })
 
 /** Throw the standard fail-loud config error for one invalid field. */
@@ -239,6 +264,13 @@ export function resolveConfig(config: Config | undefined): ResolvedConfig {
   const rollbackEnabled = config?.rollbackEnabled ?? true
   if (typeof rollbackEnabled !== 'boolean') invalid('rollbackEnabled', 'must be a boolean')
 
+  const ocrEnabled = config?.ocr?.enabled ?? true
+  if (typeof ocrEnabled !== 'boolean') invalid('ocr.enabled', 'must be a boolean')
+  const ocrCommand = config?.ocr?.command ?? DEFAULT_OCR_COMMAND
+  if (typeof ocrCommand !== 'string' || ocrCommand.length === 0 || ocrCommand.length > 256) invalid('ocr.command', 'must be a non-empty string of at most 256 characters')
+  const ocrLanguage = config?.ocr?.language ?? DEFAULT_OCR_LANGUAGE
+  if (typeof ocrLanguage !== 'string' || ocrLanguage.length === 0 || ocrLanguage.length > 32) invalid('ocr.language', 'must be a non-empty string of at most 32 characters')
+
   return Object.freeze({
     requireApproval,
     autoApproveMatchers: Object.freeze(autoApproveMatchers),
@@ -255,5 +287,6 @@ export function resolveConfig(config: Config | undefined): ResolvedConfig {
     maxTreeDepth,
     maxTextLength,
     rollbackEnabled,
+    ocr: Object.freeze({ enabled: ocrEnabled, command: ocrCommand, language: ocrLanguage }),
   })
 }

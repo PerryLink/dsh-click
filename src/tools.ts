@@ -22,6 +22,7 @@ import { OBSERVED_EVENT, type ObservedEvent } from './events.ts'
 import { ObservationStore } from './observe.ts'
 import { sanitizePath, sanitizeVisible } from './sanitize.ts'
 import { sessionAcceptsImages } from './vision.ts'
+import { centerOf, screenBoxFor, type OcrProvider, type VisualGroundingProvider } from './vision/index.ts'
 import type { DesktopBackend, ElementInfo, PixelHint, Rect, WindowInfo, WindowRef, WindowSnapshot } from './platform/types.ts'
 
 /** Everything one tool needs at runtime; injected by `src/index.ts`. */
@@ -36,6 +37,10 @@ export interface ToolServices {
   readonly observations: ObservationStore
   /** The action executor. */
   readonly actions: ActionExecutor
+  /** The probed OCR provider (optional). */
+  readonly ocr: OcrProvider
+  /** The optional visual grounding provider. */
+  readonly grounding: VisualGroundingProvider
 }
 
 /** The sanitized, model-visible window facts shared by observer outputs. */
@@ -418,6 +423,169 @@ export function screenReadTool(services: ToolServices) {
         window: sanitized,
         elements: tree.elements.map(element => observedElement(element, config.maxTextLength)),
         pixels: tree.pixels.map(pixel => observedPixel(pixel, config.maxTextLength)),
+      }
+    },
+  })
+}
+
+/**
+ * `screen_find` — find clickable text/visual targets in a window whose
+ * accessibility tree is empty (no UIA elements). It captures the window,
+ * runs OCR (when the probed provider is available) and, when a grounding
+ * provider is mounted and a query is given, visual grounding, then returns
+ * screen-coordinate targets plus an observationId for the coordinate-based
+ * `click` path. Read-only: never needs approval.
+ *
+ * @param services - runtime services.
+ * @returns the tool definition.
+ */
+export function screenFindTool(services: ToolServices) {
+  const { config, backend, observations, ocr, grounding } = services
+  return defineTool({
+    name: 'screen_find',
+    description:
+      'Find clickable text (or a described visual target) in a desktop window that exposes no accessibility tree, via OCR and optional visual grounding. Returns screen-coordinate targets plus an observationId; later `click` calls address a target by its (x, y) coordinates and cite this observationId in `basedOn`. Read-only: never needs approval.',
+    parameters: {
+      target: {
+        type: 'object',
+        description: 'Which window to search (windowId, windowTitle, or processId); omitted = the foreground window.',
+        properties: {
+          windowId: { type: 'integer', description: 'Native window handle from app_list.' },
+          windowTitle: { type: 'string', description: 'Visible window title (matched case-insensitively by substring).' },
+          processId: { type: 'integer', description: 'Owning process id.' },
+        },
+        additionalProperties: false,
+      },
+      query: { type: 'string', description: 'Optional substring to filter OCR text by, or the visual target description for grounding.' },
+      maxSide: { type: 'integer', description: 'Longest side in pixels; larger captures are downscaled.' },
+    },
+    output: {
+      schema: {
+        type: 'object',
+        properties: {
+          ok: { type: 'boolean', const: true },
+          observationId: { type: 'string' },
+          window: {
+            type: 'object',
+            properties: {
+              windowId: { type: 'integer' },
+              processId: { type: 'integer' },
+              title: { type: 'string' },
+              className: { type: 'string' },
+              executablePath: { oneOf: [{ type: 'string' }, { type: 'null' }] },
+              rect: {
+                type: 'object',
+                properties: {
+                  x: { type: 'integer' },
+                  y: { type: 'integer' },
+                  width: { type: 'integer' },
+                  height: { type: 'integer' },
+                },
+                additionalProperties: false,
+              },
+              foreground: { type: 'boolean' },
+            },
+            additionalProperties: false,
+          },
+          ocrAvailable: { type: 'boolean' },
+          targets: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                text: { type: 'string' },
+                x: { type: 'integer' },
+                y: { type: 'integer' },
+                width: { type: 'integer' },
+                height: { type: 'integer' },
+                confidence: { type: 'number' },
+                source: { type: 'string', enum: ['ocr', 'grounding'] },
+              },
+              additionalProperties: false,
+            },
+          },
+        },
+        additionalProperties: false,
+      },
+      render(_args, value): ContentBlock[] {
+        const result = value as unknown as {
+          observationId: string
+          window: ObservedWindowValue
+          ocrAvailable: boolean
+          targets: Array<{ text: string; x: number; y: number; width: number; height: number; confidence: number; source: string }>
+        }
+        const lines = [
+          `Text/visual targets in ${windowLine(result.window)}:`,
+          `observationId: ${result.observationId}`,
+          `OCR available: ${result.ocrAvailable}`,
+          `${result.targets.length} target(s):`,
+        ]
+        for (const target of result.targets) {
+          lines.push(`- ${JSON.stringify(target.text)} at (${target.x}, ${target.y}) ${target.width}x${target.height} [${target.source}]`)
+        }
+        lines.push('cite this observationId in click `basedOn` and address a target by its (x, y) coordinates.')
+        return [{ type: 'text', text: lines.join('\n') }]
+      },
+    },
+    timeoutMs: config.helperTimeoutMs + 30_000,
+    async execute(args, exec) {
+      backendGuard(services)
+      const parsed = args as { target?: WindowRef; query?: string; maxSide?: number }
+      const requestedSide = parsed.maxSide
+      const maxSide = requestedSide === undefined ? config.maxScreenshotSide : Math.min(requestedSide, config.maxScreenshotSide)
+      const shot = await backend.shot(parsed.target ?? {}, maxSide, exec.signal)
+      const sanitized = observedWindow(shot.snapshot, config.maxTextLength)
+      const record = observations.record(shot.snapshot)
+
+      const targets: Array<{ text: string; x: number; y: number; width: number; height: number; confidence: number; source: 'ocr' | 'grounding' }> = []
+      if (ocr.available) {
+        for (const word of await ocr.recognize(shot.pngBase64, exec.signal)) {
+          const box = screenBoxFor(shot.snapshot.rect, shot.width, shot.height, word.box)
+          const center = centerOf(box)
+          targets.push({
+            text: sanitizeVisible(word.text, config.maxTextLength),
+            x: center.x,
+            y: center.y,
+            width: Math.round(box.width),
+            height: Math.round(box.height),
+            confidence: word.confidence / 100,
+            source: 'ocr',
+          })
+        }
+      }
+      const query = parsed.query?.trim() ?? ''
+      if (grounding.available && query !== '') {
+        for (const target of await grounding.ground(shot.pngBase64, shot.width, shot.height, query, exec.signal)) {
+          const box = screenBoxFor(shot.snapshot.rect, shot.width, shot.height, target.box)
+          const center = centerOf(box)
+          targets.push({
+            text: sanitizeVisible(target.label, config.maxTextLength),
+            x: center.x,
+            y: center.y,
+            width: Math.round(box.width),
+            height: Math.round(box.height),
+            confidence: target.confidence,
+            source: 'grounding',
+          })
+        }
+      }
+      const filtered = query === '' ? targets : targets.filter(target => target.text.toLowerCase().includes(query.toLowerCase()))
+
+      auditObservation(exec, {
+        observationId: record.id,
+        windowId: shot.snapshot.windowId,
+        processId: shot.snapshot.processId,
+        executablePath: sanitized.executablePath,
+        windowTitle: sanitized.title,
+        elementCount: 0,
+      }, config.auditSessionEvents)
+
+      return {
+        ok: true,
+        observationId: record.id,
+        window: sanitized,
+        ocrAvailable: ocr.available,
+        targets: filtered,
       }
     },
   })
@@ -836,6 +1004,7 @@ export function allTools(services: ToolServices) {
   return [
     screenShotTool(services),
     screenReadTool(services),
+    screenFindTool(services),
     clickTool(services),
     typeTool(services),
     scrollTool(services),

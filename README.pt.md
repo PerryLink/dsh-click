@@ -103,6 +103,7 @@ Todos os ajustes são campos `Config` do Schemastery (alteráveis pelo cordis.ym
 | `maxTreeDepth` | `32` | Profundidade máxima do percurso da árvore de acessibilidade (1..64) |
 | `maxTextLength` | `200` | Comprimento de truncamento das strings visíveis ao modelo (16..10000) |
 | `rollbackEnabled` | `true` | Fazer backup e restaurar o texto do controle quando `type` falha |
+| `ocr.enabled` / `command` / `language` | `true` / `tesseract` / `eng` | OCR opcional para `screen_find` (detectado na montagem; degrada para indisponível sem tesseract) |
 
 Exemplo de sobrescrita no patch do seu perfil:
 
