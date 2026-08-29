@@ -1,6 +1,7 @@
 <div align="center">
 
 # 🖱️ dsh-click
+- **Canal 1024 store**: `npm i -g dsh1024` una vez, luego `dsh1024 plugin --profile web add dsh-click` (cuenta para el ranking de instalaciones de [deepseek1024.com](https://deepseek1024.com)).
 
 **Control nativo de escritorio multiplataforma para DeepSeek Harness — Windows primero.**
 
