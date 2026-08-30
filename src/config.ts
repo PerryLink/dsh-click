@@ -89,11 +89,11 @@ export interface Config {
   autoApproveWindows?: string[]
   /**
    * Whether dsh-click session audit events (`dsh-click/observed`/`dsh-click/action`)
-   * are appended to the session log (default true). Set false when the harness
-   * session reader does not recognize these event types (e.g. DeepSeek Harness
-   * rc.6/rc.7 static event whitelist without a plugin registration surface):
-   * a log containing them then refuses resume with
-   * "event type ... unknown to this harness and not marked ignorable".
+   * are appended to the session log (default true). The adaptive audit gate
+   * already skips the append on envelope-less hosts (rc.6–rc.8, 0.1.1-rc.2,
+   * and 0.1.2-alpha.1, which fails closed on unknown types at read); set
+   * false to stop audit appends entirely, even on hosts that carry the
+   * `ignorable` envelope.
    */
   auditSessionEvents?: boolean
   /** Whether mutating actions may bring the target window to the foreground as a fallback (default 'never'). */

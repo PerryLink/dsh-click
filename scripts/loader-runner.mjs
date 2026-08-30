@@ -16,11 +16,14 @@
 import { Context } from '@deepseek-ai/cordis'
 import Include from '@deepseek-ai/cordis-plugin-include'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
-import { CallId } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
+
+// Dual-ruler call id: host master renamed dsh-llm's `CallId` brand to
+// `ToolCallId`; a local identity keeps the runner green on both rulers.
+const CallId = (id) => id
 
 const configArgument = process.argv[2]
 if (configArgument === undefined) {

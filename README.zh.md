@@ -91,7 +91,7 @@ dsh --profile web --dump-config | grep -A2 'id: dsh-click'
 |---|---|---|
 | `requireApproval` | `true` | 每个变更性操作都过审批；观察类工具从不询问 |
 | `autoApproveWindows` | `[]` | 跳过审批询问的窗口标题/可执行路径正则（仍做新鲜度校验并审计） |
-| `auditSessionEvents` | `true` | 是否向会话追加 `dsh-click/observed`/`dsh-click/action` 审计事件；当 harness 会话读取器不识别这些事件类型时（DeepSeek Harness rc.6–rc.8 静态事件白名单）设为 `false`——含此类事件的日志会拒绝恢复 |
+| `auditSessionEvents` | `true` | 是否向会话追加 `dsh-click/observed`/`dsh-click/action` 审计事件。自适应门已在无信封宿主（rc.6–rc.8、0.1.1-rc.2，以及对未知类型读取即失败的 0.1.2-alpha.1）上自动跳过追加；设为 `false` 可完全停止审计追加 |
 | `focusFallback` | `never` | 操作是否可在最后手段下把目标窗口带到前台（`never` / `allow`） |
 | `imageMode` | `auto` | `screen_shot` 渲染：`auto`（模型支持图像时附图像，否则文字）或 `text` |
 | `helperTimeoutMs` | `30000` | 每次 helper 调用的超时（毫秒，1..300000） |
@@ -151,7 +151,7 @@ profile patch 中的覆盖示例：
 - **Windows 优先。** macOS 与 Linux 后端已预留；在这些平台上每次调用都以明确原因失败关闭。
 - **纯文本保真度。** `screen_read` 依赖应用暴露 UIAutomation；没有无障碍树的应用只有像素提示。坐标点击仍然可用。
 - **post 输入类应用。** 部分应用忽略 post 窗口消息（游戏、部分 Electron 界面）；`key` 会如实报告而非假装成功。
-- **rc.8 及更早 harness 构建上的会话审计。** 审计事件使用两参数 `Session.append` 形式（`0.1.0-rc.6`–`0.1.0-rc.8` peers 未对插件事件开放 append envelope 选项）；在这些构建上事件为 required-on-read，静态白名单会话读取器（rc.6–rc.8 `KNOWN_SESSION_EVENT_TYPES`）会拒绝恢复含此类事件的日志，除非 `auditSessionEvents` 设为 `false`。
+- **无信封 harness 构建上的会话审计。** 审计事件走自适应门：认识该词汇的宿主直接追加，带 `ignorable` 信封的宿主带标记追加，无信封宿主——`0.1.0-rc.6`–`0.1.0-rc.8`、`0.1.1-rc.2` 以及移除信封并对未知类型读取即失败的 `0.1.2-alpha.1`——不追加审计事件；工具结果仍是可重建的审计轨迹。设 `auditSessionEvents: false` 可完全停止审计追加。
 
 ## 开发
 

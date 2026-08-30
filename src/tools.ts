@@ -18,7 +18,7 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import { ActionExecutor } from './actions.ts'
 import type { ResolvedConfig } from './config.ts'
-import { OBSERVED_EVENT, type ObservedEvent } from './events.ts'
+import { appendAuditEvent, OBSERVED_EVENT, type ObservedEvent } from './events.ts'
 import { ObservationStore } from './observe.ts'
 import { sanitizePath, sanitizeVisible } from './sanitize.ts'
 import { sessionAcceptsImages } from './vision.ts'
@@ -109,7 +109,7 @@ function auditObservation(exec: ToolRunContext, event: ObservedEvent, auditSessi
   const session = exec.agent?.session
   if (session === undefined) return
   try {
-    session.append(OBSERVED_EVENT, event)
+    appendAuditEvent(session, OBSERVED_EVENT, event)
   } catch {
     // The tool/result event still logs the model-visible content.
   }

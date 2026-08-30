@@ -8,7 +8,7 @@
  */
 
 import Loader from '@deepseek-ai/cordis-plugin-loader'
-import { CallId } from '@deepseek-ai/dsh-llm'
+import { CallId } from './call-id.ts'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import { describe, expect, it } from 'vitest'
 import * as plugin from '../src/index.ts'

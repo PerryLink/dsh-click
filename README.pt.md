@@ -91,7 +91,7 @@ Todos os ajustes são campos `Config` do Schemastery (alteráveis pelo cordis.ym
 |---|---|---|
 | `requireApproval` | `true` | Proteger toda ação mutante atrás da aprovação; observadores nunca perguntam |
 | `autoApproveWindows` | `[]` | Regex de título de janela/caminho de executável que pulam a pergunta de aprovação (ainda passam por atualidade e auditoria) |
-| `auditSessionEvents` | `true` | Acrescenta eventos de auditoria `dsh-click/observed`/`dsh-click/action` à sessão; defina `false` quando o leitor de sessões do harness não reconhecer esses tipos (lista branca estática do DeepSeek Harness rc.6–rc.8) — um log com eles recusa a retomada |
+| `auditSessionEvents` | `true` | Acrescenta eventos de auditoria `dsh-click/observed`/`dsh-click/action` à sessão. A porta adaptativa já omite o append em hosts sem envelope (rc.6–rc.8, 0.1.1-rc.2 e 0.1.2-alpha.1, que falha fechado para tipos desconhecidos na leitura); defina `false` para interromper totalmente os appends de auditoria |
 | `focusFallback` | `never` | Se uma ação pode trazer a janela alvo ao primeiro plano como último recurso (`never` / `allow`) |
 | `imageMode` | `auto` | Renderização do `screen_shot`: `auto` (imagem quando o modelo aceita imagens, texto caso contrário) ou `text` |
 | `helperTimeoutMs` | `30000` | Tempo limite por chamada ao helper em ms (1..300000) |
@@ -151,7 +151,7 @@ Exemplo de sobrescrita no patch do seu perfil:
 - **Windows primeiro.** Os backends macOS e Linux estão reservados; nessas plataformas cada chamada falha fechado com um motivo claro.
 - **Fidelidade somente texto.** O `screen_read` depende de o aplicativo expor UIAutomation; apps sem árvore acessível oferecem apenas dicas de pixels. Cliques por coordenadas continuam disponíveis.
 - **Apps de entrada postada.** Alguns aplicativos ignoram mensagens de janela postadas (jogos, algumas superfícies Electron); o `key` informa isso com honestidade em vez de fingir sucesso.
-- **Auditoria de sessão em builds do harness até rc.8.** Os eventos de auditoria usam a forma de dois argumentos de `Session.append` (os peers `0.1.0-rc.6`–`0.1.0-rc.8` não expõem opção de envelope de append para eventos de plugin); nesses builds os eventos são required-on-read, e um leitor de sessões de lista branca estática (rc.6–rc.8 `KNOWN_SESSION_EVENT_TYPES`) recusa retomar um log que os contenha salvo se `auditSessionEvents` for `false`.
+- **Auditoria de sessão em builds do harness sem envelope.** Os eventos de auditoria cruzam uma porta adaptativa: hosts que conhecem o vocabulário acrescentam diretamente, hosts com o envelope `ignorable` acrescentam com o marcador, e hosts sem envelope — `0.1.0-rc.6`–`0.1.0-rc.8`, `0.1.1-rc.2` e `0.1.2-alpha.1` (que removeu o envelope e falha fechado para tipos desconhecidos na leitura) — não recebem append de auditoria; os resultados das ferramentas continuam sendo a trilha reconstruível. Defina `auditSessionEvents: false` para interromper os appends por completo.
 
 ## Desenvolvimento
 

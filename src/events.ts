@@ -1,17 +1,24 @@
 /**
  * Session audit events for dsh-click (declaration merging into the harness's
- * `SessionEventMap`). Both events are log-only; the two-argument
- * `Session.append` form is retained because the published peers (through
- * 0.1.1-rc.2) expose no append-envelope (`ignorable`) option for plugin
- * events, so the two-argument form typechecks and runs across the line. Tool arguments and rendered results are
- * already logged by the tool runtime as `tool/call` + `tool/result`; these
- * events carry the observation and action facts that exist outside them:
- * window identity, process identity, and the approval/outcome audit trail.
+ * `SessionEventMap`) and the adaptive append gate. Both events are log-only;
+ * tool arguments and rendered results are already logged by the tool runtime
+ * as `tool/call` + `tool/result`, and these events carry the observation and
+ * action facts that exist outside them: window identity, process identity,
+ * and the approval/outcome audit trail.
+ *
+ * The gate appends only when the host can carry the events safely:
+ * - hosts whose known-type set covers the vocabulary append plainly;
+ * - hosts with an `ignorable` append option (pre-0.1.2 master builds) append
+ *   with the marker, so builds that do not know the type skip it on restore;
+ * - envelope-less hosts (0.1.0-rc.6/rc.8, 0.1.1-rc.2, and 0.1.2-alpha.1,
+ *   which removed the envelope and fails closed on unknown types at read)
+ *   get no append — the tool results remain the reconstructable audit trail.
  *
  * @module dsh-click/events
  */
 
 import type { ImageMediaType } from '@deepseek-ai/dsh-attachment'
+import { KNOWN_SESSION_EVENT_TYPES, type Session } from '@deepseek-ai/dsh-session'
 
 /** Process identity facts captured immediately before and after an action. */
 export interface ProcessFacts {
@@ -115,4 +122,32 @@ export type ActionEvent = {
   processAfter?: ProcessFacts
   restored?: boolean
   detail?: string
+}
+
+/** Loose append shape probed at runtime (envelope-less hosts take no options; pre-0.1.2 master builds took `ignorable`). */
+type AppendProbe = (type: string, data: unknown, options?: { ignorable: true }) => unknown
+
+/**
+ * Append one dsh-click audit event when the host can carry it safely; skip
+ * silently otherwise (the tool/call + tool/result events remain the
+ * model-visible log, so nothing model-visible is lost). See the module doc
+ * for the three host classes.
+ * @param session - the calling session.
+ * @param type - the audit event type.
+ * @param data - the audit payload.
+ */
+export function appendAuditEvent(
+  session: Session,
+  type: typeof OBSERVED_EVENT | typeof ACTION_EVENT,
+  data: ObservedEvent | ActionEvent,
+): void {
+  if (KNOWN_SESSION_EVENT_TYPES.has(type)) {
+    if (type === OBSERVED_EVENT) session.append(type, data as ObservedEvent)
+    else session.append(type, data as ActionEvent)
+    return
+  }
+  const append = session.append as AppendProbe
+  if (Function.prototype.toString.call(append).includes('ignorable')) {
+    append.call(session, type, data, { ignorable: true })
+  }
 }

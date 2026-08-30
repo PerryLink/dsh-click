@@ -6,7 +6,7 @@
  * @module dsh-click/test/tools.spec
  */
 
-import { CallId } from '@deepseek-ai/dsh-llm'
+import { CallId } from './call-id.ts'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import { describe, expect, it } from 'vitest'
@@ -107,8 +107,8 @@ describe('screen_read', () => {
     expect(value.elements[0]?.name).toBe('SaveDirty')
     expect(value.pixels[0]?.color).toBe('rgb(1, 2, 3)')
 
-    const observed = harness.session.events.filter(event => event.type === 'dsh-click/observed').at(-1)
-    expect(observed?.data).toMatchObject({ observationId: value.observationId, windowTitle: 'Demo App', elementCount: 1 })
+    // rc.2-shaped host: no append envelope → the adaptive gate skips the audit append.
+    expect(harness.session.events.filter(event => event.type === 'dsh-click/observed')).toHaveLength(0)
 
     const text = result.content.filter((block: ContentBlock) => block.type === 'text').map(block => (block as { text: string }).text).join('\n')
     expect(text).toContain('42.100')

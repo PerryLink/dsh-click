@@ -92,7 +92,7 @@ All tunables are Schemastery `Config` fields (changeable from cordis.yml). An id
 |---|---|---|
 | `requireApproval` | `true` | Gate every mutating action behind approval; observers never ask |
 | `autoApproveWindows` | `[]` | Window-title/executable regexes that skip the approval ask (still freshness-checked and audited) |
-| `auditSessionEvents` | `true` | Append `dsh-click/observed` / `dsh-click/action` session audit events; set `false` when the harness session reader does not recognize these event types (DeepSeek Harness rc.6–rc.8 static event whitelist) — a log containing them refuses resume |
+| `auditSessionEvents` | `true` | Append `dsh-click/observed` / `dsh-click/action` session audit events. The adaptive gate already skips the append on envelope-less hosts (rc.6–rc.8, 0.1.1-rc.2, and 0.1.2-alpha.1, which fails closed on unknown types at read); set `false` to stop audit appends entirely |
 | `focusFallback` | `never` | Whether an action may bring the target window to the foreground as a last resort (`never` / `allow`) |
 | `imageMode` | `auto` | `screen_shot` rendering: `auto` (image when the model accepts images, text otherwise) or `text` |
 | `helperTimeoutMs` | `30000` | Per-helper-call timeout in ms (1..300000) |
@@ -152,7 +152,7 @@ Example override in your profile patch:
 - **Windows first.** macOS and Linux backends are reserved; on those platforms every call fails closed with a clear reason.
 - **Text-only fidelity.** `screen_read` depends on the application exposing UIAutomation; apps without an accessible tree yield pixel hints only. Coordinate clicks remain available.
 - **Posted-input apps.** Some applications ignore posted window messages (games, some Electron surfaces); `key` reports this honestly instead of pretending success.
-- **Session audit on harness builds through rc.8.** The audit events are appended with the two-argument `Session.append` form (the `0.1.0-rc.6`–`0.1.0-rc.8` peers expose no append-envelope option for plugin events); on those builds the events are required-on-read, and a static-whitelist session reader (rc.6–rc.8 `KNOWN_SESSION_EVENT_TYPES`) refuses to resume a log containing them unless `auditSessionEvents` is `false`.
+- **Session audit on envelope-less harness builds.** The audit events ride an adaptive gate: hosts that know the vocabulary append plainly, hosts with the `ignorable` envelope append with the marker, and envelope-less hosts — `0.1.0-rc.6`–`0.1.0-rc.8`, `0.1.1-rc.2`, and `0.1.2-alpha.1` (which removed the envelope and fails closed on unknown types at read) — get no audit append; the tool results remain the reconstructable audit trail. Set `auditSessionEvents: false` to stop audit appends entirely.
 
 ## Development
 

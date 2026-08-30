@@ -13,7 +13,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import type { ApprovalService } from '@deepseek-ai/dsh-user-approval'
 import type { ResolvedConfig } from './config.ts'
-import { ACTION_EVENT, type ActionEvent, type ProcessFacts } from './events.ts'
+import { appendAuditEvent, ACTION_EVENT, type ActionEvent, type ProcessFacts } from './events.ts'
 import { ObservationStore, type ObservationRecord } from './observe.ts'
 import { sanitizeVisible } from './sanitize.ts'
 import { DshClickError, type ActionOutcome, type DesktopBackend, type LaunchOutcome, type WindowSnapshot } from './platform/types.ts'
@@ -61,7 +61,7 @@ export class ActionExecutor {
     const session = exec.agent?.session
     if (session === undefined) return
     try {
-      session.append(ACTION_EVENT, event)
+      appendAuditEvent(session, ACTION_EVENT, event)
     } catch {
       // The tool/result event still logs the model-visible content; the audit
       // append is supplementary and must not flip an action that already ran.

@@ -7,7 +7,7 @@
  * @module dsh-click/test/actions.spec
  */
 
-import { CallId } from '@deepseek-ai/dsh-llm'
+import { CallId } from './call-id.ts'
 import type { ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import { describe, expect, it } from 'vitest'
 import { makeOutcome, makeSnapshot, mountHarness, type Harness } from './harness.ts'
@@ -65,8 +65,8 @@ describe('action approval gate', () => {
     })
     expect(clicked.isError).toBe(false)
     expect(backend.calls).toContain('click')
-    const audit = lastActionEvent(harness)
-    expect(audit?.data).toMatchObject({ tool: 'click', approved: 'approval', outcome: 'ok' })
+    // rc.2-shaped host: no append envelope → the adaptive gate skips the audit append.
+    expect(lastActionEvent(harness)).toBeUndefined()
   })
 
   it('denies when the answerer rejects and never reaches the backend', async () => {
@@ -83,7 +83,7 @@ describe('action approval gate', () => {
     expect(clicked.isError).toBe(true)
     if (clicked.isError) expect(clicked.error.message).toContain('denied by approval')
     expect(backend.calls).not.toContain('click')
-    expect(lastActionEvent(harness)?.data).toMatchObject({ tool: 'click', outcome: 'error' })
+    expect(lastActionEvent(harness)).toBeUndefined()
   })
 
   it('fails closed when no approval service is mounted', async () => {
@@ -115,7 +115,7 @@ describe('action approval gate', () => {
     })
     expect(clicked.isError).toBe(false)
     expect(backend.calls).toContain('click')
-    expect(lastActionEvent(harness)?.data).toMatchObject({ approved: 'allowlist', outcome: 'ok' })
+    expect(lastActionEvent(harness)).toBeUndefined()
   })
 
   it('skips the gate entirely when requireApproval is false', async () => {
@@ -130,7 +130,7 @@ describe('action approval gate', () => {
       target: { x: 10, y: 10 },
     })
     expect(clicked.isError).toBe(false)
-    expect(lastActionEvent(harness)?.data).toMatchObject({ approved: 'none', outcome: 'ok' })
+    expect(lastActionEvent(harness)).toBeUndefined()
   })
 })
 
@@ -196,7 +196,7 @@ describe('process identity and rollback', () => {
     })
     expect(typed.isError).toBe(false)
     expect((typed as { value: { restored: boolean } }).value.restored).toBe(true)
-    expect(lastActionEvent(harness)?.data).toMatchObject({ tool: 'type', restored: true, outcome: 'ok' })
+    expect(lastActionEvent(harness)).toBeUndefined()
   })
 
   it('gates and launches applications through approval', async () => {
@@ -204,6 +204,6 @@ describe('process identity and rollback', () => {
     const launched = await callTool(harness, 'app_launch', { name: 'notepad' })
     expect(launched.isError).toBe(false)
     expect((launched as { value: { processId: number } }).value.processId).toBe(9001)
-    expect(lastActionEvent(harness)?.data).toMatchObject({ tool: 'app_launch', approved: 'approval', outcome: 'ok' })
+    expect(lastActionEvent(harness)).toBeUndefined()
   })
 })
