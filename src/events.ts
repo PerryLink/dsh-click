@@ -12,7 +12,7 @@
  *   with the marker, so builds that do not know the type skip it on restore;
  * - envelope-less hosts (0.1.0-rc.6/rc.8, 0.1.1-rc.2, and 0.1.2-alpha.1,
  *   which removed the envelope and fails closed on unknown types at read)
- *   get no append — the tool results remain the reconstructable audit trail.
+ *   get no append 鈥?the tool results remain the reconstructable audit trail. On 0.1.2-alpha.2 the envelope field is restored for stored-log read compatibility only - its Session.append still cannot stamp the marker, so the gate behavior is unchanged.
  *
  * @module dsh-click/events
  */
@@ -45,8 +45,7 @@ export interface ObservedImage {
 declare module '@deepseek-ai/dsh-session/types' {
   interface SessionEventMap {
     /**
-     * A screen observation was produced by `screen_shot` or `screen_read` —
-     * log-only audit. `observationId` is the id later actions cite in
+     * A screen observation was produced by `screen_shot` or `screen_read` 鈥?     * log-only audit. `observationId` is the id later actions cite in
      * `basedOn`; window and process identity are the facts the action-time
      * freshness check compares against.
      */
@@ -67,7 +66,7 @@ declare module '@deepseek-ai/dsh-session/types' {
       image?: ObservedImage
     }
     /**
-     * A mutating action was gated and executed (or refused) — log-only audit.
+     * A mutating action was gated and executed (or refused) 鈥?log-only audit.
      * `approved` records which gate allowed it; process facts prove the target
      * process identity before and after the action.
      */
