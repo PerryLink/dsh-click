@@ -5,17 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Changed
-
-- Align devDeps pins to the published dsh 0.1.2-alpha.2 line (0.1.1-rc.2 -> 0.1.2-alpha.2); no behavior change to envelope/gating semantics.
-
 ## [0.3.0] - 2026-08-30
 
 ### Changed
 
-- The `dsh-click/observed` / `dsh-click/action` audit appends now ride an adaptive gate: hosts that know the vocabulary append plainly, hosts with the `ignorable` envelope append with the marker, and envelope-less hosts (`0.1.0-rc.6`鈥揱0.1.0-rc.8`, `0.1.1-rc.2`, and `0.1.2-alpha.1`, which removed the envelope and fails closed on unknown types at read) get no append 鈥?their tool results remain the reconstructable audit trail. This prevents polluting session logs with unknown event types on 0.1.2-alpha.1 and later.
+- The `dsh-click/observed` / `dsh-click/action` audit appends now ride an adaptive gate: hosts that know the vocabulary append plainly, hosts with the `ignorable` envelope append with the marker, and envelope-less hosts (`0.1.0-rc.6`–`0.1.0-rc.8`, `0.1.1-rc.2`, and `0.1.2-alpha.1`, which removed the envelope and fails closed on unknown types at read) get no append — their tool results remain the reconstructable audit trail. This prevents polluting session logs with unknown event types on 0.1.2-alpha.1 and later.
 
 ### Fixed
 
@@ -44,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `auditSessionEvents` config option (default `true`): set `false` to stop appending `dsh-click/observed` / `dsh-click/action` session audit events. The `0.1.0-rc.6`鈥揱0.1.0-rc.8` harness peers expose no append-envelope (`ignorable`) option for plugin events, so the two-argument audit appends land as required-on-read events; harnesses whose session reader uses a static event whitelist (DeepSeek Harness rc.6鈥搑c.8 `KNOWN_SESSION_EVENT_TYPES`) refuse to resume such sessions with "event type ... unknown to this harness and not marked ignorable". Disabling the audit append is the workaround until the harness gains a plugin-event registration surface.
+- `auditSessionEvents` config option (default `true`): set `false` to stop appending `dsh-click/observed` / `dsh-click/action` session audit events. The `0.1.0-rc.6`–`0.1.0-rc.8` harness peers expose no append-envelope (`ignorable`) option for plugin events, so the two-argument audit appends land as required-on-read events; harnesses whose session reader uses a static event whitelist (DeepSeek Harness rc.6–rc.8 `KNOWN_SESSION_EVENT_TYPES`) refuse to resume such sessions with "event type ... unknown to this harness and not marked ignorable". Disabling the audit append is the workaround until the harness gains a plugin-event registration surface.
 
 ### Changed
 
@@ -55,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - PowerShell helper rewritten as BOM-prefixed ASCII so Windows PowerShell 5.1 parses it on every system codepage (Windows CI matrix).
-- `pnpm-workspace.yaml` now declares `allowBuilds` for esbuild, node-pty, and dsh-subprocess-local 鈥?clean installs no longer fail with `ERR_PNPM_IGNORED_BUILDS`.
+- `pnpm-workspace.yaml` now declares `allowBuilds` for esbuild, node-pty, and dsh-subprocess-local — clean installs no longer fail with `ERR_PNPM_IGNORED_BUILDS`.
 
 ### Docs
 
