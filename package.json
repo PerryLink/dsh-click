@@ -1,6 +1,6 @@
 {
   "name": "dsh-click",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Cross-platform native desktop control tools for DeepSeek Harness (Windows first): screen_shot, screen_read (accessibility tree + pixel description for text-only models), click/type/scroll/key, and app_list/app_launch 鈥?every mutating action gated by approval, never stealing foreground focus, with stale-observation rejection and process-identity checks",
   "repository": {
     "type": "git",
