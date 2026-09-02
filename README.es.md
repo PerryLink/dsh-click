@@ -25,7 +25,7 @@
 
 | Superficie | Estado |
 |---|---|
-| Harness | DeepSeek Harness `0.1.1-rc.2` |
+| Harness | DeepSeek Harness `0.1.2-alpha.5` |
 | Node | `^22.19.0 \|\| >=24.0.0` |
 | Plataformas | **Windows primero** (UIAutomation + entrada Win32, mediante un helper de PowerShell incluido); los backends de macOS/Linux están reservados y fallan cerrado con un motivo claro |
 | Modelo | Modelos solo-texto totalmente compatibles (`screen_read` devuelve texto estructurado); los modelos con visión reciben además las imágenes de `screen_shot` |
@@ -158,7 +158,7 @@ Ejemplo de sobrescritura en el parche de tu perfil:
 ```sh
 pnpm install        # node ^22.19 || >=24
 pnpm run typecheck  # tsc: src + tests contra el checkout local del harness
-pnpm run typecheck:ci  # tsc contra los tipos publicados 0.1.1-rc.2 (sin paths)
+pnpm run typecheck:ci  # tsc contra los tipos publicados 0.1.2-alpha.5 (sin paths)
 pnpm test           # vitest: 66 tests, 11 archivos (el smoke del helper corre en Windows)
 pnpm run build      # bundle tsdown + declaraciones tsc (lib/)
 pnpm run verify:self-contained  # las especificaciones de dependencias resuelven desde el registry
