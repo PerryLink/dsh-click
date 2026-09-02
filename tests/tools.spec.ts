@@ -108,7 +108,7 @@ describe('screen_read', () => {
     expect(value.pixels[0]?.color).toBe('rgb(1, 2, 3)')
 
     // rc.2-shaped host: no append envelope → the adaptive gate skips the audit append.
-    expect(harness.session.events.filter(event => event.type === 'dsh-click/observed')).toHaveLength(0)
+    expect(harness.session.snapshotEvents().filter(event => event.type === 'dsh-click/observed')).toHaveLength(0)
 
     const text = result.content.filter((block: ContentBlock) => block.type === 'text').map(block => (block as { text: string }).text).join('\n')
     expect(text).toContain('42.100')

@@ -46,7 +46,7 @@ function seedTree(snapshot = makeSnapshot()): Tree {
 
 /** Read the last action audit event of a kind from the session. */
 function lastActionEvent(harness: Harness) {
-  return harness.session.events.filter(event => event.type === 'dsh-click/action').at(-1)
+  return harness.session.snapshotEvents().filter(event => event.type === 'dsh-click/action').at(-1)
 }
 
 describe('action approval gate', () => {
