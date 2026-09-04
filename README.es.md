@@ -25,7 +25,7 @@
 
 | Superficie | Estado |
 |---|---|
-| Harness | DeepSeek Harness `0.1.2-alpha.5` |
+| Harness | DeepSeek Harness `0.1.2-rc.1` |
 | Node | `^22.19.0 \|\| >=24.0.0` |
 | Plataformas | **Windows primero** (UIAutomation + entrada Win32, mediante un helper de PowerShell incluido); los backends de macOS/Linux están reservados y fallan cerrado con un motivo claro |
 | Modelo | Modelos solo-texto totalmente compatibles (`screen_read` devuelve texto estructurado); los modelos con visión reciben además las imágenes de `screen_shot` |
@@ -91,7 +91,7 @@ Todos los ajustes son campos `Config` de Schemastery (modificables desde cordis.
 |---|---|---|
 | `requireApproval` | `true` | Proteger cada acción que muta tras la aprobación; los observadores nunca preguntan |
 | `autoApproveWindows` | `[]` | Regex de título de ventana/ruta de ejecutable que saltan la pregunta de aprobación (siguen con verificación de frescura y auditoría) |
-| `auditSessionEvents` | `true` | Añade eventos de auditoría `dsh-click/observed`/`dsh-click/action` a la sesión. La puerta adaptativa ya omite el append en hosts sin sobre (rc.6–rc.8, 0.1.1-rc.2 y 0.1.2-alpha.5, que falla cerrado ante tipos desconocidos en lectura); ponlo en `false` para detener por completo los appends de auditoría 0.1.2-alpha.5 (adaptado el 2026-09-02): el sobre de sesión conserva su campo ignorable solo para compatibilidad de lectura de logs almacenados - Session.append aún no puede estamparlo, por lo que el comportamiento de la puerta no cambia. |
+| `auditSessionEvents` | `true` | Añade eventos de auditoría `dsh-click/observed`/`dsh-click/action` a la sesión. La puerta adaptativa ya omite el append en hosts sin sobre (rc.6–rc.8, 0.1.1-rc.2 y 0.1.2-rc.1, que falla cerrado ante tipos desconocidos en lectura); ponlo en `false` para detener por completo los appends de auditoría 0.1.2-rc.1 (adaptado el 2026-09-02): el sobre de sesión conserva su campo ignorable solo para compatibilidad de lectura de logs almacenados - Session.append aún no puede estamparlo, por lo que el comportamiento de la puerta no cambia. |
 | `focusFallback` | `never` | Si una acción puede traer la ventana objetivo al primer plano como último recurso (`never` / `allow`) |
 | `imageMode` | `auto` | Renderizado de `screen_shot`: `auto` (imagen si el modelo acepta imágenes, texto en caso contrario) o `text` |
 | `helperTimeoutMs` | `30000` | Tiempo de espera por llamada al helper en ms (1..300000) |
@@ -151,14 +151,14 @@ Ejemplo de sobrescritura en el parche de tu perfil:
 - **Windows primero.** Los backends de macOS y Linux están reservados; en esas plataformas cada llamada falla cerrado con un motivo claro.
 - **Fidelidad solo-texto.** `screen_read` depende de que la aplicación exponga UIAutomation; las apps sin árbol accesible solo ofrecen pistas de píxeles. Los clics por coordenadas siguen disponibles.
 - **Apps de entrada enviada.** Algunas aplicaciones ignoran los mensajes de ventana enviados (juegos, algunas superficies Electron); `key` lo informa con honestidad en lugar de fingir éxito.
-- **Auditoría de sesión en builds del harness sin sobre.** Los eventos de auditoría cruzan una puerta adaptativa: los hosts que conocen el vocabulario agregan directamente, los hosts con el sobre `ignorable` agregan con el marcador, y los hosts sin sobre — `0.1.0-rc.6`–`0.1.0-rc.8`, `0.1.1-rc.2` y `0.1.2-alpha.5` (que eliminó el sobre y falla cerrado ante tipos desconocidos en lectura) — no reciben append de auditoría; los resultados de las herramientas siguen siendo la pista reconstruible. Pon `auditSessionEvents: false` para detener los appends por completo.
+- **Auditoría de sesión en builds del harness sin sobre.** Los eventos de auditoría cruzan una puerta adaptativa: los hosts que conocen el vocabulario agregan directamente, los hosts con el sobre `ignorable` agregan con el marcador, y los hosts sin sobre — `0.1.0-rc.6`–`0.1.0-rc.8`, `0.1.1-rc.2` y `0.1.2-rc.1` (que eliminó el sobre y falla cerrado ante tipos desconocidos en lectura) — no reciben append de auditoría; los resultados de las herramientas siguen siendo la pista reconstruible. Pon `auditSessionEvents: false` para detener los appends por completo.
 
 ## Desarrollo
 
 ```sh
 pnpm install        # node ^22.19 || >=24
 pnpm run typecheck  # tsc: src + tests contra el checkout local del harness
-pnpm run typecheck:ci  # tsc contra los tipos publicados 0.1.2-alpha.5 (sin paths)
+pnpm run typecheck:ci  # tsc contra los tipos publicados 0.1.2-rc.1 (sin paths)
 pnpm test           # vitest: 66 tests, 11 archivos (el smoke del helper corre en Windows)
 pnpm run build      # bundle tsdown + declaraciones tsc (lib/)
 pnpm run verify:self-contained  # las especificaciones de dependencias resuelven desde el registry

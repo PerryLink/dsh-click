@@ -25,7 +25,7 @@
 
 | 方面 | 状态 |
 |---|---|
-| Harness | DeepSeek Harness `0.1.2-alpha.5` |
+| Harness | DeepSeek Harness `0.1.2-rc.1` |
 | Node | `^22.19.0 \|\| >=24.0.0` |
 | 平台 | **Windows 优先**（UIAutomation + Win32 输入，经由内置 PowerShell 辅助进程）；macOS/Linux 后端已预留，失败时以明确原因关闭 |
 | 模型 | 纯文本模型完整可用（`screen_read` 输出结构化文本）；视觉模型额外获得 `screen_shot` 图像 |
@@ -91,7 +91,7 @@ dsh --profile web --dump-config | grep -A2 'id: dsh-click'
 |---|---|---|
 | `requireApproval` | `true` | 每个变更性操作都过审批；观察类工具从不询问 |
 | `autoApproveWindows` | `[]` | 跳过审批询问的窗口标题/可执行路径正则（仍做新鲜度校验并审计） |
-| `auditSessionEvents` | `true` | 是否向会话追加 `dsh-click/observed`/`dsh-click/action` 审计事件。自适应门已在无信封宿主（rc.6–rc.8、0.1.1-rc.2，以及对未知类型读取即失败的 0.1.2-alpha.5）上自动跳过追加；设为 `false` 可完全停止审计追加 0.1.2-alpha.5（2026-09-02 已适配）：会话信封保留 ignorable 字段但仅用于存量日志读取兼容——Session.append 仍无法盖章，门控行为不变。 |
+| `auditSessionEvents` | `true` | 是否向会话追加 `dsh-click/observed`/`dsh-click/action` 审计事件。自适应门已在无信封宿主（rc.6–rc.8、0.1.1-rc.2，以及对未知类型读取即失败的 0.1.2-rc.1）上自动跳过追加；设为 `false` 可完全停止审计追加 0.1.2-rc.1（2026-09-02 已适配）：会话信封保留 ignorable 字段但仅用于存量日志读取兼容——Session.append 仍无法盖章，门控行为不变。 |
 | `focusFallback` | `never` | 操作是否可在最后手段下把目标窗口带到前台（`never` / `allow`） |
 | `imageMode` | `auto` | `screen_shot` 渲染：`auto`（模型支持图像时附图像，否则文字）或 `text` |
 | `helperTimeoutMs` | `30000` | 每次 helper 调用的超时（毫秒，1..300000） |
@@ -151,14 +151,14 @@ profile patch 中的覆盖示例：
 - **Windows 优先。** macOS 与 Linux 后端已预留；在这些平台上每次调用都以明确原因失败关闭。
 - **纯文本保真度。** `screen_read` 依赖应用暴露 UIAutomation；没有无障碍树的应用只有像素提示。坐标点击仍然可用。
 - **post 输入类应用。** 部分应用忽略 post 窗口消息（游戏、部分 Electron 界面）；`key` 会如实报告而非假装成功。
-- **无信封 harness 构建上的会话审计。** 审计事件走自适应门：认识该词汇的宿主直接追加，带 `ignorable` 信封的宿主带标记追加，无信封宿主——`0.1.0-rc.6`–`0.1.0-rc.8`、`0.1.1-rc.2` 以及移除信封并对未知类型读取即失败的 `0.1.2-alpha.5`——不追加审计事件；工具结果仍是可重建的审计轨迹。设 `auditSessionEvents: false` 可完全停止审计追加。
+- **无信封 harness 构建上的会话审计。** 审计事件走自适应门：认识该词汇的宿主直接追加，带 `ignorable` 信封的宿主带标记追加，无信封宿主——`0.1.0-rc.6`–`0.1.0-rc.8`、`0.1.1-rc.2` 以及移除信封并对未知类型读取即失败的 `0.1.2-rc.1`——不追加审计事件；工具结果仍是可重建的审计轨迹。设 `auditSessionEvents: false` 可完全停止审计追加。
 
 ## 开发
 
 ```sh
 pnpm install        # node ^22.19 || >=24
 pnpm run typecheck  # tsc：src + tests，对照本地 harness checkout
-pnpm run typecheck:ci  # tsc：对照已发布的 0.1.2-alpha.5 类型（无 paths）
+pnpm run typecheck:ci  # tsc：对照已发布的 0.1.2-rc.1 类型（无 paths）
 pnpm test           # vitest：66 个测试、11 个文件（helper 冒烟在 Windows 上运行）
 pnpm run build      # tsdown bundle + tsc 声明（lib/）
 pnpm run verify:self-contained  # 依赖声明全部来自 registry

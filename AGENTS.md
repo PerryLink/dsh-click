@@ -16,7 +16,7 @@ Standalone DeepSeek Harness plugin repository (`dsh-click`). Development follows
 - `src/platform/runner.ts` — `HelperBackend`: spawns `native/win32/dsh-click-helper.ps1` through `ctx.subprocess`, JSON request on stdin / JSON response on stdout, deadline- and signal-bounded.
 - `src/platform/selection.ts` — `createBackend`: Windows + `ctx.subprocess` → `HelperBackend`; everything else is an unavailable backend that fails closed with a model-readable reason (profiles keep booting everywhere).
 - `native/win32/dsh-click-helper.ps1` — the PowerShell helper: UIAutomation reads and posted input, no foreground stealing, JSON protocol (`HELPER_PROTOCOL_VERSION`).
-- `tests/` — vitest; real Cordis `Context` + real `SessionStore`/`Session`/`ToolRuntime`/`ApprovalService` from the `0.1.1-rc.2` peers; the desktop backend and subprocess are scripted fakes (the subprocess fake is a subclass of the REAL `SubprocessRuntime`), and the helper smoke test runs the real PowerShell helper end to end on Windows only.
+- `tests/` — vitest; real Cordis `Context` + real `SessionStore`/`Session`/`ToolRuntime`/`ApprovalService` from the `0.1.2-rc.1` peers; the desktop backend and subprocess are scripted fakes (the subprocess fake is a subclass of the REAL `SubprocessRuntime`), and the helper smoke test runs the real PowerShell helper end to end on Windows only.
 
 ## Hard rules applied here
 
@@ -34,7 +34,7 @@ Standalone DeepSeek Harness plugin repository (`dsh-click`). Development follows
 
 `pnpm run typecheck && pnpm run typecheck:ci && pnpm test && pnpm run build && pnpm run verify:self-contained && pnpm run verify:artifacts && pnpm pack`
 
-- `typecheck` resolves `@deepseek-ai/*` through tsconfig paths to the local harness checkout; `typecheck:ci` clears the paths and checks against the published `0.1.1-rc.2` types. Both must stay green — the package ships against 0.1.1-rc.2.
+- `typecheck` resolves `@deepseek-ai/*` through tsconfig paths to the local harness checkout; `typecheck:ci` clears the paths and checks against the published `0.1.2-rc.1` types. Both must stay green — the package ships against 0.1.2-rc.1.
 - `verify:artifacts` also proves the tarball's ESM face imports under plain Node and that the native helper ships.
 
 ## Release
