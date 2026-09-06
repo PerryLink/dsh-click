@@ -25,7 +25,7 @@
 
 | सतह | स्थिति |
 |---|---|
-| Harness | DeepSeek Harness `0.1.2-rc.1`। 2026-09-06 को dsh-v0.1.3-alpha.1 master checkout के विरुद्ध सत्यापित (पूर्ण gate chain + profile install smoke)। |
+| Harness | DeepSeek Harness `dsh-v0.1.3-alpha.1` (GitHub tag, 2026-09-06 को सत्यापित)। 2026-09-06 को dsh-v0.1.3-alpha.1 master checkout के विरुद्ध सत्यापित (पूर्ण gate chain + profile install smoke)। |
 | Node | `^22.19.0 \|\| >=24.0.0` |
 | प्लेटफ़ॉर्म | **Windows पहले** (UIAutomation + Win32 इनपुट, बंडल किए गए PowerShell हेल्पर के ज़रिए); macOS/Linux बैकएंड आरक्षित हैं और स्पष्ट कारण के साथ fail-closed होते हैं |
 | मॉडल | केवल-टेक्स्ट मॉडल पूरी तरह समर्थित (`screen_read` संरचित टेक्स्ट लौटाता है); विज़न मॉडल को अतिरिक्त रूप से `screen_shot` की छवियाँ मिलती हैं |
