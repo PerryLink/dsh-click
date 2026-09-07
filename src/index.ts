@@ -38,6 +38,7 @@ export { ObservationStore, observationIdOf, type ObservationRecord, type Freshne
 export { ActionExecutor, type ActionExecutorDeps, type ApprovalKind } from './actions.ts'
 export { createBackend, UnavailableBackend } from './platform/selection.ts'
 export { HelperBackend } from './platform/runner.ts'
+// Service Definition: the eight defineTool schemas (name/parameters/output) are declared in tools.ts and exported here as allTools/ToolServices.
 export { allTools, type ToolServices } from './tools.ts'
 export { OBSERVED_EVENT, ACTION_EVENT, type ObservedEvent, type ActionEvent, type ProcessFacts } from './events.ts'
 export { sanitizeText, sanitizePath, redactSensitive, sanitizeVisible } from './sanitize.ts'
@@ -91,8 +92,10 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   const grounding: VisualGroundingProvider = (ctx.get('dsh-click/grounding') as VisualGroundingProvider | undefined)
     ?? new UnavailableGroundingProvider()
 
+  // Consumer: every tool's execute handler consumes this ToolServices bundle (ctx, config, backend, observations, actions, ocr, grounding).
   const services: ToolServices = { ctx, config: resolved, backend, observations, actions, ocr, grounding }
 
+  // Service Provider: each tool is registered through ctx.tools.register inside a ctx.effect, so stop/HMR removes exactly the registered tools.
   for (const tool of allTools(services)) {
     ctx.effect(() => ctx.tools.register(tool), `dsh-click: ${tool.name} tool`)
   }
