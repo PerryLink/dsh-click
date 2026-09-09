@@ -37,7 +37,6 @@ class HangingSubprocessRuntime extends SubprocessRuntime {
 
   spawn(spec: SubprocessSpawnSpec): SubprocessHandle {
     return {
-      pid: 7777,
       stdin: undefined,
       stdout: undefined,
       stderr: undefined,
