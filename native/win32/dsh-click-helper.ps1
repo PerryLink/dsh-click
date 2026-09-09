@@ -1,4 +1,4 @@
-﻿# dsh-click native helper (Windows PowerShell 5.1).
+# dsh-click native helper (Windows PowerShell 5.1).
 #
 # One request = one process: JSON request on stdin, JSON response on stdout
 # (exit code 0 even for handled failures; the error envelope is the response).
