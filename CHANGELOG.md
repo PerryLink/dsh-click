@@ -1,0 +1,152 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.3.10] - 2026-09-12
+
+### Changed
+
+- Rename the four translated READMEs to `README-<lang>.md`. npm selects the package-page readme as the first markdown file matching its `{README,README.*}` glob (`@npmcli/package-json`, publish path), and that glob order puts `README.<lang>.md` ahead of `README.md` — so npm was serving the Simplified-Chinese file for this package too (measured on 15/15 sampled packages of the family). The new names sit outside the glob, so the English source is served again. No content changed apart from the language-switcher link each translation holds to its siblings, and the repo readme gate still passes. Takes effect with the next release; an already-published version cannot gain a corrected readme retroactively.
+- Pin the `@deepseek-ai/dsh-*` dev/test dependencies to the published `0.1.5-rc.2` line and record `0.1.5-rc.2` in `dshWorkshop.compatibility.dshVersions`; the monthly Compat workflow now runs against `0.1.5-rc.2`. The peer range `>=0.1.2-rc.1 <0.2.0 || >=0.1.5-alpha.1 <0.2.0` is unchanged, so no supported host line is dropped.
+
+## [0.3.9] - 2026-09-10
+
+### Changed
+
+- Pin the `@deepseek-ai/dsh-*` dev/test dependencies to the published `0.1.5-rc.1` line and record `0.1.5-rc.1` in `dshWorkshop.compatibility.dshVersions`; the monthly Compat workflow now runs against `0.1.5-rc.1`. The peer range `>=0.1.2-rc.1 <0.2.0 || >=0.1.5-alpha.1 <0.2.0` is unchanged, so no supported host line is dropped.
+
+### Docs
+
+- Refresh the five-language README compatibility baseline to `dsh-v0.1.5-rc.1` (verified 2026-09-10).
+
+## [0.3.8] - 2026-09-09
+
+### Changed
+
+- Align the `@deepseek-ai/dsh-*` peer ranges to `>=0.1.2-rc.1 <0.2.0 || >=0.1.5-alpha.1 <0.2.0` and pin the dev/test dependencies to the published `0.1.5-alpha.1` line: adaptation to DeepSeek Harness `dsh-v0.1.5-alpha.1` (session format V3, `ctx.agent` removal, `Inbox` type-only interface); runtime behavior is unchanged for every supported host line.
+- Record `0.1.5-alpha.1` in `dshWorkshop.compatibility.dshVersions`.
+
+### Docs
+
+- Refresh the five-language README compatibility baseline to `dsh-v0.1.5-alpha.1` (verified 2026-09-09).
+
+## [0.3.7] - 2026-09-08
+
+### Docs
+
+- Repair GBK mojibake in the package.json description: the em dash was corrupted to the U+9225 U+003F marker pair; the description is restored to the clean pre-corruption text; no behavior change.
+
+## [0.3.6] - 2026-09-07
+
+### Docs
+
+- Fix the DSH plugin badge URL: shields.io rejects the four-segment static badge form with "404 badge not found"; the label now uses the documented double-dash form (`dsh--plugin`), rendering identically; no behavior change.
+
+## [0.3.5] - 2026-09-07
+
+### Fixed
+
+- Align the `@deepseek-ai/dsh-*` peer ranges to `>=0.1.2-rc.1 <0.2.0`: the older `>=0.1.0-rc.8 <0.2.0` band resolved to only the `0.1.0-rc.8` prerelease under registry-driven resolution and broke fresh tarball installs; no behavior change.
+
+### Docs
+
+- Refresh the five-language README support-version wording: the verified GitHub tag `dsh-v0.1.3-alpha.1` now leads the compatibility claim, while npm `0.1.2-rc.1` stays the published dependency-pin line (peers `>=0.1.2-rc.1 <0.2.0`); no behavior change.
+
+
+## [0.3.4] - 2026-09-04
+
+### Changed
+
+- Align the devDependency pins to the published dsh `0.1.2-rc.1` line, bump the `dshWorkshop` compatibility list and the compat CI harness probes, and re-verify the adaptation claims; no behavior change.
+
+## [0.3.3] - 2026-09-02
+
+### Docs
+
+- Sync the five-language READMEs to the 0.1.2-alpha.5 facts; no behavior change.
+
+## [0.3.2] - 2026-09-02
+
+### Changed
+
+- Align the devDependency pins to the published dsh 0.1.2-alpha.5 line and re-verify the adaptation claims; no behavior change.
+
+## [0.3.1] - 2026-09-01
+
+### Changed
+
+- Align the devDependency pins to the published dsh `0.1.2-alpha.3` line (9 `@deepseek-ai/dsh-*` packages) and align `cordis`/`schemastery` to `^4.0.2`/`^3.18.2`. The adaptive audit gate keeps failing safe on `0.1.2-alpha.3` (`Session.append` still cannot stamp the `ignorable` marker); the five-language READMEs record the alpha.3 fact.
+
+## [0.3.0] - 2026-08-30
+
+### Changed
+
+- The `dsh-click/observed` / `dsh-click/action` audit appends now ride an adaptive gate: hosts that know the vocabulary append plainly, hosts with the `ignorable` envelope append with the marker, and envelope-less hosts (`0.1.0-rc.6`–`0.1.0-rc.8`, `0.1.1-rc.2`, and `0.1.2-alpha.1`, which removed the envelope and fails closed on unknown types at read) get no append — their tool results remain the reconstructable audit trail. This prevents polluting session logs with unknown event types on 0.1.2-alpha.1 and later.
+
+### Fixed
+
+- Tests no longer import the `CallId` brand from `@deepseek-ai/dsh-llm` (renamed to `ToolCallId` on host master): the call-id brand is now derived from the `dsh-tools` execution contract, staying green on both the published rc line and the 0.1.2-alpha.1 checkout.
+
+## [0.2.0] - 2026-08-26
+
+### Added
+
+- OCR and visual grounding providers for no-UIA windows.
+
+## [0.1.4] - 2026-08-23
+
+### Added
+
+- Three-interface assertions (model schema + canonical value + content blocks) for `screen_shot` and `click`, completing the U2 tool-surface coverage alongside the existing `screen_read` assertion.
+
+## [0.1.3] - 2026-08-22
+
+### Changed
+
+- Harness peers upgraded from `0.1.0-rc.8` to `0.1.1-rc.2`: all `@deepseek-ai/dsh-*` devDependencies pinned to `0.1.1-rc.2`, `dshWorkshop.compatibility.dshVersions` targets `0.1.1-rc.2`, and the CI/Compat workflow pins (`@deepseek-ai/dsh`, `dsh-base`, `dsh-headless`, published-types typecheck) moved to `0.1.1-rc.2`. peerDependencies stay `>=0.1.0-rc.8 <0.2.0` (no 0.1.1-rc.2-only API is required).
+- Verified the `dsh-attachment` seam against 0.1.1-rc.2: `saveImage` still returns the canonical `ImageAttachmentRef` (`attachmentId`/`mediaType`/`bytes`/`width`/`height`) and the `ImageAttachmentLimits` six-field shape (`maxImageBytes`, `maxImagesPerMessage`, `maxMessageImageBytes`, `maxImagePixels`, `maxImageDimension`, `mediaTypes`) is unchanged for consumers; no source change was required.
+
+## [0.1.2] - 2026-08-21
+
+### Added
+
+- `auditSessionEvents` config option (default `true`): set `false` to stop appending `dsh-click/observed` / `dsh-click/action` session audit events. The `0.1.0-rc.6`–`0.1.0-rc.8` harness peers expose no append-envelope (`ignorable`) option for plugin events, so the two-argument audit appends land as required-on-read events; harnesses whose session reader uses a static event whitelist (DeepSeek Harness rc.6–rc.8 `KNOWN_SESSION_EVENT_TYPES`) refuse to resume such sessions with "event type ... unknown to this harness and not marked ignorable". Disabling the audit append is the workaround until the harness gains a plugin-event registration surface.
+
+### Changed
+
+- Harness peers upgraded from `0.1.0-rc.6` to `0.1.0-rc.8`: all `@deepseek-ai/dsh-*` devDependencies pinned to `0.1.0-rc.8`, peerDependencies widened to `>=0.1.0-rc.8 <0.2.0`, and the declared compatibility now targets `0.1.0-rc.8`.
+
+## [0.1.1] - 2026-08-16
+
+### Fixed
+
+- PowerShell helper rewritten as BOM-prefixed ASCII so Windows PowerShell 5.1 parses it on every system codepage (Windows CI matrix).
+- `pnpm-workspace.yaml` now declares `allowBuilds` for esbuild, node-pty, and dsh-subprocess-local — clean installs no longer fail with `ERR_PNPM_IGNORED_BUILDS`.
+
+### Docs
+
+- Install sections in all five READMEs document the `allowBuilds` snippet for `ERR_PNPM_IGNORED_BUILDS`.
+
+## [0.1.0] - 2026-08-16
+
+### Added
+
+- Eight desktop-control tools behind one safety boundary: `screen_shot`, `screen_read` (structured accessibility tree + pixel hints for text-only models), `click`, `type`, `scroll`, `key`, `app_list`, `app_launch`.
+- Windows native helper (`native/win32/dsh-click-helper.ps1`) driven over the `ctx.subprocess` seam with a JSON wire protocol (UIAutomation + posted input, never stealing foreground focus).
+- Safety boundary on every mutating action: fresh-observation requirement (`basedOn`) with pixel-hash staleness rejection, approval gate (configurable window allowlist), process-identity verification before and after each action, and `type` rollback.
+- `dsh-click/observed` and `dsh-click/action` session audit events (sanitized, log-only).
+- Optional backend seam (`dsh-click/backend`) so embeddings and tests can pre-select the desktop backend.
+- Schemastery configuration with fail-loud bounds; every tunable documented in `cordis.patch.yml` and the five-language READMEs.
+
+### Changed
+
+- Sanitizers: secret values stop at control characters, tabs collapse to a single space, and `sanitizeVisible` redacts before sanitizing.
+- Session audit appends use the two-argument `Session.append` form so the package typechecks and runs on the pinned `0.1.0-rc.6` peers (those builds have no append-envelope option).
+
+### Fixed
+
+- Tool definitions now satisfy the strict `defineTool` schema typing (parameter `required: true as const`, output-schema tuples, schema-inferred execute/render signatures).
+- Test harness double-registration of the subprocess service (Cordis services self-register on construction).
