@@ -27,7 +27,7 @@
 
 | Surface | Status |
 |---|---|
-| Harness | DeepSeek Harness `dsh-v0.1.5-rc.1` (GitHub tag, verified 2026-09-10). Verified 2026-09-10 against the dsh-v0.1.5-rc.1 master checkout (full gate chain + profile install smoke). |
+| Harness | DeepSeek Harness `dsh-v0.1.5-rc.2` (GitHub tag, verified 2026-09-11). Verified 2026-09-11 against the dsh-v0.1.5-rc.2 master checkout (full gate chain + profile install smoke). |
 | Node | `^22.19.0 \|\| >=24.0.0` |
 | Platforms | **Windows first** (UIAutomation + Win32 input, via a bundled PowerShell helper); macOS/Linux backends are reserved and fail closed with a clear reason |
 | Model | Text-only models fully supported (`screen_read` returns structured text); vision models additionally get `screen_shot` images |
@@ -160,7 +160,7 @@ Example override in your profile patch:
 ```sh
 pnpm install        # node ^22.19 || >=24
 pnpm run typecheck  # tsc: src + tests against the local harness checkout
-pnpm run typecheck:ci  # tsc against the published 0.1.5-rc.1 types (no paths)
+pnpm run typecheck:ci  # tsc against the published 0.1.5-rc.2 types (no paths)
 pnpm test           # vitest: 66 tests, 11 files (helper smoke runs on Windows)
 pnpm run build      # tsdown bundle + tsc declarations (lib/)
 pnpm run verify:self-contained  # dependency specs resolve from the registry
