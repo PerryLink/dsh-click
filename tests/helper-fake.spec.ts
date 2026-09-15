@@ -14,6 +14,7 @@ import {
   SubprocessRuntime,
   type SubprocessCollectedOutputs,
   type SubprocessHandle,
+  type SubprocessOutcome,
   type SubprocessOutputReader,
   type SubprocessSpawnSpec,
 } from '@deepseek-ai/dsh-subprocess'
@@ -35,13 +36,18 @@ class HangingSubprocessRuntime extends SubprocessRuntime {
     return Promise.resolve(`C:\\Windows\\System32\\${command}`)
   }
 
+  async terminalEnvironment(): Promise<{ platform: 'windows' }> {
+    return { platform: 'windows' }
+  }
+
   spawn(spec: SubprocessSpawnSpec): SubprocessHandle {
-    return {
+    const handle = {
       stdin: undefined,
       stdout: undefined,
       stderr: undefined,
+      control: undefined,
       collected: { stdout: emptyReader(), stderr: emptyReader() } as SubprocessCollectedOutputs,
-      done: new Promise((_resolve, reject) => {
+      done: new Promise<SubprocessOutcome>((_resolve, reject) => {
         spec.signal?.addEventListener('abort', () => {
           reject(new Error('helper deadline aborted the hung spawn'))
         }, { once: true })
@@ -49,6 +55,7 @@ class HangingSubprocessRuntime extends SubprocessRuntime {
       terminate: () => undefined,
       waitForExit: async () => true,
     }
+    return handle
   }
 
   spawnTerminal(): never {
@@ -64,6 +71,10 @@ class BrokenResolveSubprocessRuntime extends SubprocessRuntime {
 
   resolveExecutable(): Promise<string> {
     return Promise.reject(new Error('powershell.exe not found'))
+  }
+
+  async terminalEnvironment(): Promise<{ platform: 'windows' }> {
+    return { platform: 'windows' }
   }
 
   spawn(): SubprocessHandle {
