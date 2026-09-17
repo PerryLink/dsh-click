@@ -1,0 +1,21 @@
+[package]
+name = "dsh-click-linux"
+version = "0.1.0"
+edition = "2021"
+description = "Native Linux helper for dsh-click: screen_read (AT-SPI2), click/type/scroll/key (ydotool), app_list/app_launch (hyprctl)"
+authors = ["PerryLink"]
+
+[[bin]]
+name = "dsh-click-linux"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+thiserror = "1"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
