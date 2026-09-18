@@ -695,15 +695,33 @@ function Get-ActionOutcome($hwnd, $action, $delivered, $restored, $detail) {
     processAfter = $after
   }
   if ($restored -ne $null) { $outcome.restored = [bool]$restored }
-  if ($detail -ne $null) { $outcome.detail = [string]$detail }
+  # The focus-fallback verdict rides every action outcome: a refused
+  # SetForegroundWindow must be visible to the model, not silently discarded.
+  $merged = @()
+  if ($detail -ne $null) { $merged += [string]$detail }
+  if ($script:focusFallbackDetail -ne $null) { $merged += [string]$script:focusFallbackDetail }
+  if ($merged.Count -gt 0) { $outcome.detail = ($merged -join '; ') }
   return $outcome
+}
+
+# The sanctioned focus escape hatch: attempt to bring the window forward and
+# record the verdict for the outcome. Never throws - the action itself has
+# already been delivered or is about to be.
+function Set-DshFocusFallback($hwnd) {
+  try {
+    if (-not [DshClickWin32]::SetForegroundWindow($hwnd)) {
+      $script:focusFallbackDetail = 'focusFallback requested but the OS refused SetForegroundWindow; the action was delivered without foreground focus'
+    }
+  } catch {
+    $script:focusFallbackDetail = "focusFallback requested but SetForegroundWindow threw: $($_.Exception.Message)"
+  }
 }
 
 function Invoke-OpClick($opArgs) {
   $request = $opArgs.request
   $focusFallback = if ($opArgs.focusFallback -ne $null) { [bool]$opArgs.focusFallback } else { $false }
   $hwnd = Resolve-Window @{ windowId = $request.windowId }
-  if ($focusFallback) { [void][DshClickWin32]::SetForegroundWindow($hwnd) }
+  if ($focusFallback) { Set-DshFocusFallback $hwnd }
   $windowRect = Get-WindowRectInfo $hwnd
   $delivered = 'posted'
   $windowElement = Get-UiaElement $hwnd
@@ -734,7 +752,7 @@ function Invoke-OpType($opArgs) {
   $focusFallback = if ($opArgs.focusFallback -ne $null) { [bool]$opArgs.focusFallback } else { $false }
   $rollback = if ($request.rollback -ne $null) { [bool]$request.rollback } else { $true }
   $hwnd = Resolve-Window @{ windowId = $request.windowId }
-  if ($focusFallback) { [void][DshClickWin32]::SetForegroundWindow($hwnd) }
+  if ($focusFallback) { Set-DshFocusFallback $hwnd }
   $windowElement = Get-UiaElement $hwnd
   $element = Find-ElementByRuntimeId $windowElement ([string]$request.elementId)
   if ($element -eq $null) { throw "element '$($request.elementId)' not found in window $hwnd (re-run screen_read)" }
@@ -782,7 +800,7 @@ function Invoke-OpScroll($opArgs) {
     }
   }
   if ($scroll -ne $null) {
-    if ($focusFallback) { [void][DshClickWin32]::SetForegroundWindow($hwnd) }
+    if ($focusFallback) { Set-DshFocusFallback $hwnd }
     $vertical = [System.Windows.Automation.ScrollAmount]::NoAmount
     switch ([string]$request.direction) {
       'up' { $vertical = [System.Windows.Automation.ScrollAmount]::SmallIncrement }
@@ -796,7 +814,7 @@ function Invoke-OpScroll($opArgs) {
     }
     return (Get-ActionOutcome $hwnd 'scroll' 'uia' $null $null)
   }
-  if ($focusFallback) { [void][DshClickWin32]::SetForegroundWindow($hwnd) }
+  if ($focusFallback) { Set-DshFocusFallback $hwnd }
   $direction = [string]$request.direction
   $page = ($direction -eq 'page-up' -or $direction -eq 'page-down')
   $sign = if ($direction -eq 'up' -or $direction -eq 'page-up') { 1 } else { -1 }
@@ -813,7 +831,7 @@ function Invoke-OpKey($opArgs) {
   $request = $opArgs.request
   $focusFallback = if ($opArgs.focusFallback -ne $null) { [bool]$opArgs.focusFallback } else { $false }
   $hwnd = Resolve-Window @{ windowId = $request.windowId }
-  if ($focusFallback) { [void][DshClickWin32]::SetForegroundWindow($hwnd) }
+  if ($focusFallback) { Set-DshFocusFallback $hwnd }
   Post-KeyCombo $hwnd ([string]$request.keys)
   return (Get-ActionOutcome $hwnd 'key' 'posted' $null $null)
 }
@@ -853,6 +871,9 @@ try {
   $request = $raw | ConvertFrom-Json
   $opArgs = if ($request.args -ne $null) { $request.args } else { @{} }
   $result = $null
+  # Per-request focus-fallback verdict (set by Set-DshFocusFallback, consumed by
+  # Get-ActionOutcome); one helper process serves exactly one request.
+  $script:focusFallbackDetail = $null
   switch ([string]$request.op) {
     'windows' { $result = Invoke-OpWindows }
     'apps' { $result = Invoke-OpApps }
