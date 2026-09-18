@@ -103,13 +103,22 @@ function observedWindowInfo(info: WindowInfo, maxTextLength: number) {
   }
 }
 
-/** Append the `dsh-click/observed` audit event; a failed append is swallowed. */
+/** Whether the one-time audit-skip notice has been emitted (module-scope: the tool definitions share one host). */
+let warnedAuditSkip = false
+
+/** Append the `dsh-click/observed` audit event; a failed append is swallowed, a host-side skip is reported once. */
 function auditObservation(exec: ToolRunContext, event: ObservedEvent, auditSessionEvents = true): void {
   if (!auditSessionEvents) return
   const session = exec.agent?.session
   if (session === undefined) return
   try {
-    appendAuditEvent(session, OBSERVED_EVENT, event)
+    const outcome = appendAuditEvent(session, OBSERVED_EVENT, event)
+    if (outcome === 'skipped-unknown-host' && !warnedAuditSkip) {
+      warnedAuditSkip = true
+      // `ToolRunContext` carries no logger and the tool definitions close over
+      // no context here, so the one-time notice goes to the host console.
+      console.warn('dsh-click: this host does not admit dsh-click/observed audit events (unknown non-surface type); the tool results remain the audit trail')
+    }
   } catch {
     // The tool/result event still logs the model-visible content.
   }

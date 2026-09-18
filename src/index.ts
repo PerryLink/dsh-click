@@ -3,7 +3,7 @@
  * (Windows first, macOS/Linux backends reserved).
  *
  * Host-only function plugin — no default export (the Loader unwraps
- * `exports.default ?? exports`). It registers eight tools behind one shared
+ * `exports.default ?? exports`). It registers nine tools behind one shared
  * safety boundary: observations are structured text (accessibility tree +
  * pixel hints) so text-only models work, mutating actions must cite a fresh
  * observation and pass approval (or the configured window allowlist), the
@@ -28,8 +28,8 @@ import { UnavailableGroundingProvider, type VisualGroundingProvider } from './vi
 
 export const name = 'dsh-click'
 
-/** Hard services: the tool registry every contribution lands in. */
-export const inject = ['tools']
+/** Hard services: the tool registry every contribution lands in, plus the subprocess runtime the Windows helper spawns through. */
+export const inject = ['tools', 'subprocess']
 
 export { Config, resolveConfig } from './config.ts'
 export { VERSION, HELPER_PROTOCOL_VERSION } from './version.ts'
@@ -38,7 +38,7 @@ export { ObservationStore, observationIdOf, type ObservationRecord, type Freshne
 export { ActionExecutor, type ActionExecutorDeps, type ApprovalKind } from './actions.ts'
 export { createBackend, UnavailableBackend } from './platform/selection.ts'
 export { HelperBackend } from './platform/runner.ts'
-// Service Definition: the eight defineTool schemas (name/parameters/output) are declared in tools.ts and exported here as allTools/ToolServices.
+// Service Definition: the nine defineTool schemas (name/parameters/output) are declared in tools.ts and exported here as allTools/ToolServices.
 export { allTools, type ToolServices } from './tools.ts'
 export { OBSERVED_EVENT, ACTION_EVENT, type ObservedEvent, type ActionEvent, type ProcessFacts } from './events.ts'
 export { sanitizeText, sanitizePath, redactSensitive, sanitizeVisible } from './sanitize.ts'

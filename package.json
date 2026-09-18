@@ -74,7 +74,7 @@
     "capability": {
       "id": "desktop-control",
       "kind": "tool",
-      "invocation": "screen_shot, screen_read, click, type, scroll, key, app_list, app_launch",
+      "invocation": "screen_shot, screen_read, screen_find, click, type, scroll, key, app_list, app_launch",
       "expected": "observes native application windows (screenshot and structured accessibility tree with pixel hints) and performs window-scoped actions gated by approval, without stealing foreground focus"
     },
     "evidence": {

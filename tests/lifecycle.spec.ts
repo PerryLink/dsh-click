@@ -44,7 +44,7 @@ describe('export contract', () => {
     const unwrapped = loader.unwrapExports(plugin)
     expect(unwrapped).toBe(plugin)
     expect(unwrapped.name).toBe('dsh-click')
-    expect(unwrapped.inject).toEqual(['tools'])
+    expect(unwrapped.inject).toEqual(['tools', 'subprocess'])
     expect(unwrapped.Config).not.toBeUndefined()
     expect(typeof unwrapped.apply).toBe('function')
   })

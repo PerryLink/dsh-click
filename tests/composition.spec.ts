@@ -22,7 +22,7 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const runner = join(repositoryRoot, 'scripts', 'loader-runner.mjs')
 const builtEntry = join(repositoryRoot, 'lib', 'index.js')
 
-const TOOL_NAMES = ['screen_shot', 'screen_read', 'click', 'type', 'scroll', 'key', 'app_list', 'app_launch']
+const TOOL_NAMES = ['screen_shot', 'screen_read', 'screen_find', 'click', 'type', 'scroll', 'key', 'app_list', 'app_launch']
 
 /** One cordis.yml: real service rows, then the plugin row with config. */
 function configFor(pluginRow: string, configLines: string[] = []): string {
@@ -30,6 +30,9 @@ function configFor(pluginRow: string, configLines: string[] = []): string {
     "- name: '@deepseek-ai/dsh-session'",
     "- name: '@deepseek-ai/dsh-system-prompt'",
     "- name: '@deepseek-ai/dsh-tools'",
+    // `subprocess` is a hard inject of the plugin (the Windows helper spawns
+    // through it), so the composed profile must carry the provider row.
+    "- name: '@deepseek-ai/dsh-subprocess-local'",
     `- name: ${JSON.stringify(pluginRow)}`,
     ...(configLines.length > 0 ? ['  config:', ...configLines.map(line => `    ${line}`)] : []),
     '',
@@ -65,7 +68,7 @@ beforeAll(() => {
 }, 120_000)
 
 describe('Loader composition (built entry)', () => {
-  it('mounts the plugin, registers all eight tools, and applies its config', () => {
+  it('mounts the plugin, registers all nine tools, and applies its config', () => {
     const configPath = join(temporaryRoot, 'valid.yml')
     writeFileSync(configPath, configFor(pathToFileURL(builtEntry).href, ['maxScreenshotSide: 320']))
     const evidence = runRunner(configPath)

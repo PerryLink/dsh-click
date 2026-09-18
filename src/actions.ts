@@ -42,6 +42,8 @@ export interface ActionExecutorDeps {
 
 /** Executes mutating desktop actions behind the full safety boundary. */
 export class ActionExecutor {
+  /** Whether the one-time audit-skip notice has been emitted. */
+  private warnedAuditSkip = false
   /** @param deps - executor dependencies. */
   constructor(private readonly deps: ActionExecutorDeps) {}
 
@@ -61,7 +63,13 @@ export class ActionExecutor {
     const session = exec.agent?.session
     if (session === undefined) return
     try {
-      appendAuditEvent(session, ACTION_EVENT, event)
+      const outcome = appendAuditEvent(session, ACTION_EVENT, event)
+      // The audit is supplementary: report the skip once per session at most
+      // (a host whose vocabulary does not cover the type never appends).
+      if (outcome === 'skipped-unknown-host' && !this.warnedAuditSkip) {
+        this.warnedAuditSkip = true
+        this.deps.ctx.logger('dsh-click').warn('dsh-click: this host does not admit dsh-click/action audit events (unknown non-surface type); the tool results remain the audit trail')
+      }
     } catch {
       // The tool/result event still logs the model-visible content; the audit
       // append is supplementary and must not flip an action that already ran.

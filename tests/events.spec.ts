@@ -34,15 +34,34 @@ describe('appendAuditEvent', () => {
     }
   })
 
-  it('appends with the marker on envelope hosts', () => {
+  it('never appends on an unknown-type host, even with an ignorable-shaped body, and reports the skip', () => {
+    // The source-text probe was removed (P0-4): `Session.append` cannot stamp
+    // an `ignorable` marker on a non-surface type, and an unmarked unknown
+    // event breaks 0.1.5+ readers, so the gate only ever appends when the
+    // host's vocabulary covers the type.
     const calls: unknown[][] = []
     const append = function (type: string, data: unknown, options?: unknown) {
-      // The `ignorable` marker rides the options bag on envelope hosts.
+      const ignorable = (options as { ignorable?: boolean } | undefined)?.ignorable
+      void ignorable
       calls.push(options === undefined ? [type, data] : [type, data, options])
-      return { ignorable: (options as { ignorable?: boolean } | undefined)?.ignorable === true }
+      return { ignorable: ignorable === true }
     }
-    appendAuditEvent({ append } as unknown as Session, OBSERVED_EVENT, payload)
-    expect(calls).toEqual([[OBSERVED_EVENT, payload, { ignorable: true }]])
+    const outcome = appendAuditEvent({ append } as unknown as Session, OBSERVED_EVENT, payload)
+    expect(outcome).toBe('skipped-unknown-host')
+    expect(calls).toHaveLength(0)
+  })
+
+  it('reports the append on a host whose vocabulary covers the type', () => {
+    ;(KNOWN_SESSION_EVENT_TYPES as Set<string>).add(OBSERVED_EVENT)
+    try {
+      const calls: unknown[][] = []
+      const append = function (type: string, data: unknown) { calls.push([type, data]) }
+      const outcome = appendAuditEvent({ append } as unknown as Session, OBSERVED_EVENT, payload)
+      expect(outcome).toBe('appended')
+      expect(calls).toEqual([[OBSERVED_EVENT, payload]])
+    } finally {
+      ;(KNOWN_SESSION_EVENT_TYPES as Set<string>).delete(OBSERVED_EVENT)
+    }
   })
 
   it('skips the append on envelope-less hosts', () => {
@@ -51,7 +70,8 @@ describe('appendAuditEvent', () => {
       calls.push(surface === undefined ? [type, data] : [type, data, surface])
       return { surface }
     }
-    appendAuditEvent({ append } as unknown as Session, OBSERVED_EVENT, payload)
+    const outcome = appendAuditEvent({ append } as unknown as Session, OBSERVED_EVENT, payload)
+    expect(outcome).toBe('skipped-unknown-host')
     expect(calls).toHaveLength(0)
   })
 })
