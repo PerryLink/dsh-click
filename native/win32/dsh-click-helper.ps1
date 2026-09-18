@@ -57,6 +57,15 @@ public static class DshClickWin32 {
   [DllImport("user32.dll")]
   public static extern bool SetForegroundWindow(IntPtr hWnd);
 
+  [StructLayout(LayoutKind.Sequential)]
+  public struct POINT { public int X; public int Y; }
+
+  [DllImport("user32.dll")]
+  public static extern bool ScreenToClient(IntPtr hWnd, ref POINT point);
+
+  [DllImport("user32.dll")]
+  public static extern bool GetClientRect(IntPtr hWnd, out RECT rect);
+
   [DllImport("user32.dll")]
   public static extern int GetSystemMetrics(int index);
 
@@ -401,7 +410,25 @@ function Get-ElementCenter($element) {
   return @{ x = [int]($bounds.X + $bounds.Width / 2); y = [int]($bounds.Y + $bounds.Height / 2) }
 }
 
-function Get-ClientPoint($windowRect, $screenX, $screenY) {
+function Get-ClientPoint($hwnd, $windowRect, $screenX, $screenY) {
+  # Exact client-area mapping via ScreenToClient (window rects include the
+  # border and title bar, so plain subtraction lands ~8px/~31px off). The
+  # mapping is non-regressive: if the interop call is unavailable, fall back to
+  # the rectangle arithmetic and the old containment check.
+  try {
+    $point = New-Object DshClickWin32+POINT
+    $point.X = [int]$screenX
+    $point.Y = [int]$screenY
+    $client = New-Object DshClickWin32+RECT
+    if ([DshClickWin32]::ScreenToClient($hwnd, [ref]$point) -and [DshClickWin32]::GetClientRect($hwnd, [ref]$client)) {
+      if ($point.X -lt 0 -or $point.Y -lt 0 -or $point.X -ge $client.Right -or $point.Y -ge $client.Bottom) {
+        throw "point ($screenX, $screenY) lies outside the client area of window $hwnd"
+      }
+      return @{ x = $point.X; y = $point.Y }
+    }
+  } catch [System.Management.Automation.RuntimeException] {
+    throw
+  } catch { }
   $cx = $screenX - $windowRect.x
   $cy = $screenY - $windowRect.y
   if ($cx -lt 0 -or $cy -lt 0 -or $cx -ge $windowRect.width -or $cy -ge $windowRect.height) {
@@ -695,15 +722,33 @@ function Get-ActionOutcome($hwnd, $action, $delivered, $restored, $detail) {
     processAfter = $after
   }
   if ($restored -ne $null) { $outcome.restored = [bool]$restored }
-  if ($detail -ne $null) { $outcome.detail = [string]$detail }
+  # The focus-fallback verdict rides every action outcome: a refused
+  # SetForegroundWindow must be visible to the model, not silently discarded.
+  $merged = @()
+  if ($detail -ne $null) { $merged += [string]$detail }
+  if ($script:focusFallbackDetail -ne $null) { $merged += [string]$script:focusFallbackDetail }
+  if ($merged.Count -gt 0) { $outcome.detail = ($merged -join '; ') }
   return $outcome
+}
+
+# The sanctioned focus escape hatch: attempt to bring the window forward and
+# record the verdict for the outcome. Never throws - the action itself has
+# already been delivered or is about to be.
+function Set-DshFocusFallback($hwnd) {
+  try {
+    if (-not [DshClickWin32]::SetForegroundWindow($hwnd)) {
+      $script:focusFallbackDetail = 'focusFallback requested but the OS refused SetForegroundWindow; the action was delivered without foreground focus'
+    }
+  } catch {
+    $script:focusFallbackDetail = "focusFallback requested but SetForegroundWindow threw: $($_.Exception.Message)"
+  }
 }
 
 function Invoke-OpClick($opArgs) {
   $request = $opArgs.request
   $focusFallback = if ($opArgs.focusFallback -ne $null) { [bool]$opArgs.focusFallback } else { $false }
   $hwnd = Resolve-Window @{ windowId = $request.windowId }
-  if ($focusFallback) { [void][DshClickWin32]::SetForegroundWindow($hwnd) }
+  if ($focusFallback) { Set-DshFocusFallback $hwnd }
   $windowRect = Get-WindowRectInfo $hwnd
   $delivered = 'posted'
   $windowElement = Get-UiaElement $hwnd
@@ -716,13 +761,13 @@ function Invoke-OpClick($opArgs) {
       $delivered = 'uia'
     } else {
       $center = Get-ElementCenter $element
-      $client = Get-ClientPoint $windowRect $center.x $center.y
+      $client = Get-ClientPoint $hwnd $windowRect $center.x $center.y
       Post-Click $hwnd $client.x $client.y ([string]$request.button)
       $delivered = 'posted'
     }
   } else {
     if ($request.x -eq $null -or $request.y -eq $null) { throw 'click requires elementId or (x, y)' }
-    $client = Get-ClientPoint $windowRect ([int]$request.x) ([int]$request.y)
+    $client = Get-ClientPoint $hwnd $windowRect ([int]$request.x) ([int]$request.y)
     Post-Click $hwnd $client.x $client.y ([string]$request.button)
     $delivered = 'posted'
   }
@@ -734,7 +779,7 @@ function Invoke-OpType($opArgs) {
   $focusFallback = if ($opArgs.focusFallback -ne $null) { [bool]$opArgs.focusFallback } else { $false }
   $rollback = if ($request.rollback -ne $null) { [bool]$request.rollback } else { $true }
   $hwnd = Resolve-Window @{ windowId = $request.windowId }
-  if ($focusFallback) { [void][DshClickWin32]::SetForegroundWindow($hwnd) }
+  if ($focusFallback) { Set-DshFocusFallback $hwnd }
   $windowElement = Get-UiaElement $hwnd
   $element = Find-ElementByRuntimeId $windowElement ([string]$request.elementId)
   if ($element -eq $null) { throw "element '$($request.elementId)' not found in window $hwnd (re-run screen_read)" }
@@ -782,7 +827,7 @@ function Invoke-OpScroll($opArgs) {
     }
   }
   if ($scroll -ne $null) {
-    if ($focusFallback) { [void][DshClickWin32]::SetForegroundWindow($hwnd) }
+    if ($focusFallback) { Set-DshFocusFallback $hwnd }
     $vertical = [System.Windows.Automation.ScrollAmount]::NoAmount
     switch ([string]$request.direction) {
       'up' { $vertical = [System.Windows.Automation.ScrollAmount]::SmallIncrement }
@@ -796,7 +841,7 @@ function Invoke-OpScroll($opArgs) {
     }
     return (Get-ActionOutcome $hwnd 'scroll' 'uia' $null $null)
   }
-  if ($focusFallback) { [void][DshClickWin32]::SetForegroundWindow($hwnd) }
+  if ($focusFallback) { Set-DshFocusFallback $hwnd }
   $direction = [string]$request.direction
   $page = ($direction -eq 'page-up' -or $direction -eq 'page-down')
   $sign = if ($direction -eq 'up' -or $direction -eq 'page-up') { 1 } else { -1 }
@@ -804,7 +849,7 @@ function Invoke-OpScroll($opArgs) {
   $delta = [int]($sign * $notches * $amount * 120)
   $wparam = [IntPtr][int64]($delta * 65536)
   $rect = Get-WindowRectInfo $hwnd
-  $client = Get-ClientPoint $rect ([int]($rect.x + $rect.width / 2)) ([int]($rect.y + $rect.height / 2))
+  $client = Get-ClientPoint $hwnd $rect ([int]($rect.x + $rect.width / 2)) ([int]($rect.y + $rect.height / 2))
   [void][DshClickWin32]::PostMessage($hwnd, 0x20A, $wparam, (Get-LParam $client.x $client.y))
   return (Get-ActionOutcome $hwnd 'scroll' 'posted' $null 'posted wheel message to the window')
 }
@@ -813,7 +858,7 @@ function Invoke-OpKey($opArgs) {
   $request = $opArgs.request
   $focusFallback = if ($opArgs.focusFallback -ne $null) { [bool]$opArgs.focusFallback } else { $false }
   $hwnd = Resolve-Window @{ windowId = $request.windowId }
-  if ($focusFallback) { [void][DshClickWin32]::SetForegroundWindow($hwnd) }
+  if ($focusFallback) { Set-DshFocusFallback $hwnd }
   Post-KeyCombo $hwnd ([string]$request.keys)
   return (Get-ActionOutcome $hwnd 'key' 'posted' $null $null)
 }
@@ -829,7 +874,13 @@ function Invoke-OpLaunch($opArgs) {
     $command = Get-Command $name -ErrorAction SilentlyContinue
     if ($command -ne $null) { $target = $command.Source } else { throw "cannot resolve application '$name' on the search path" }
   }
-  $process = Start-Process -FilePath $target -ArgumentList $launchArgs -PassThru
+  # An empty -ArgumentList binds to nothing useful and can fail the launch
+  # outright, so the parameter is omitted when there are no arguments.
+  if ($launchArgs.Count -gt 0) {
+    $process = Start-Process -FilePath $target -ArgumentList $launchArgs -PassThru
+  } else {
+    $process = Start-Process -FilePath $target -PassThru
+  }
   $path = $null
   try {
     $path = $process.Path
@@ -847,6 +898,9 @@ try {
   $request = $raw | ConvertFrom-Json
   $opArgs = if ($request.args -ne $null) { $request.args } else { @{} }
   $result = $null
+  # Per-request focus-fallback verdict (set by Set-DshFocusFallback, consumed by
+  # Get-ActionOutcome); one helper process serves exactly one request.
+  $script:focusFallbackDetail = $null
   switch ([string]$request.op) {
     'windows' { $result = Invoke-OpWindows }
     'apps' { $result = Invoke-OpApps }

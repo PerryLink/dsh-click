@@ -124,30 +124,34 @@ export type ActionEvent = {
   detail?: string
 }
 
-/** Loose append shape probed at runtime (envelope-less hosts take no options; pre-0.1.2 master builds took `ignorable`). */
-type AppendProbe = (type: string, data: unknown, options?: { ignorable: true }) => unknown
+/** The outcome of one audit append attempt. */
+export type AuditAppendOutcome = 'appended' | 'skipped-unknown-host'
 
 /**
- * Append one dsh-click audit event when the host can carry it safely; skip
- * silently otherwise (the tool/call + tool/result events remain the
- * model-visible log, so nothing model-visible is lost). See the module doc
- * for the three host classes.
+ * Append one dsh-click audit event when the host's known-type set covers the
+ * vocabulary; otherwise skip and report the outcome so the caller can surface
+ * it (the tool/call + tool/result events remain the model-visible log, so
+ * nothing model-visible is lost).
+ *
+ * HARD RULE (measured on the 0.1.6-alpha.2 line): `Session.append`'s third
+ * parameter carries a `SurfaceIntent`, and only for surface-eligible event
+ * types; it is never an `ignorable` envelope. An out-of-repo non-surface type
+ * therefore cannot be stamped, and an unmarked unknown event makes a 0.1.5+
+ * reader refuse the whole stored log — so there is deliberately no probe path
+ * and never an unconditional append here.
  * @param session - the calling session.
  * @param type - the audit event type.
  * @param data - the audit payload.
+ * @returns `'appended'` when the event was written, `'skipped-unknown-host'`
+ *   when this host's vocabulary does not cover the type.
  */
 export function appendAuditEvent(
   session: Session,
   type: typeof OBSERVED_EVENT | typeof ACTION_EVENT,
   data: ObservedEvent | ActionEvent,
-): void {
-  if (KNOWN_SESSION_EVENT_TYPES.has(type)) {
-    if (type === OBSERVED_EVENT) session.append(type, data as ObservedEvent)
-    else session.append(type, data as ActionEvent)
-    return
-  }
-  const append = session.append as AppendProbe
-  if (Function.prototype.toString.call(append).includes('ignorable')) {
-    append.call(session, type, data, { ignorable: true })
-  }
+): AuditAppendOutcome {
+  if (!KNOWN_SESSION_EVENT_TYPES.has(type)) return 'skipped-unknown-host'
+  if (type === OBSERVED_EVENT) session.append(type, data as ObservedEvent)
+  else session.append(type, data as ActionEvent)
+  return 'appended'
 }
