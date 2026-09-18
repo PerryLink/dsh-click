@@ -57,6 +57,15 @@ public static class DshClickWin32 {
   [DllImport("user32.dll")]
   public static extern bool SetForegroundWindow(IntPtr hWnd);
 
+  [StructLayout(LayoutKind.Sequential)]
+  public struct POINT { public int X; public int Y; }
+
+  [DllImport("user32.dll")]
+  public static extern bool ScreenToClient(IntPtr hWnd, ref POINT point);
+
+  [DllImport("user32.dll")]
+  public static extern bool GetClientRect(IntPtr hWnd, out RECT rect);
+
   [DllImport("user32.dll")]
   public static extern int GetSystemMetrics(int index);
 
@@ -401,7 +410,25 @@ function Get-ElementCenter($element) {
   return @{ x = [int]($bounds.X + $bounds.Width / 2); y = [int]($bounds.Y + $bounds.Height / 2) }
 }
 
-function Get-ClientPoint($windowRect, $screenX, $screenY) {
+function Get-ClientPoint($hwnd, $windowRect, $screenX, $screenY) {
+  # Exact client-area mapping via ScreenToClient (window rects include the
+  # border and title bar, so plain subtraction lands ~8px/~31px off). The
+  # mapping is non-regressive: if the interop call is unavailable, fall back to
+  # the rectangle arithmetic and the old containment check.
+  try {
+    $point = New-Object DshClickWin32+POINT
+    $point.X = [int]$screenX
+    $point.Y = [int]$screenY
+    $client = New-Object DshClickWin32+RECT
+    if ([DshClickWin32]::ScreenToClient($hwnd, [ref]$point) -and [DshClickWin32]::GetClientRect($hwnd, [ref]$client)) {
+      if ($point.X -lt 0 -or $point.Y -lt 0 -or $point.X -ge $client.Right -or $point.Y -ge $client.Bottom) {
+        throw "point ($screenX, $screenY) lies outside the client area of window $hwnd"
+      }
+      return @{ x = $point.X; y = $point.Y }
+    }
+  } catch [System.Management.Automation.RuntimeException] {
+    throw
+  } catch { }
   $cx = $screenX - $windowRect.x
   $cy = $screenY - $windowRect.y
   if ($cx -lt 0 -or $cy -lt 0 -or $cx -ge $windowRect.width -or $cy -ge $windowRect.height) {
@@ -734,13 +761,13 @@ function Invoke-OpClick($opArgs) {
       $delivered = 'uia'
     } else {
       $center = Get-ElementCenter $element
-      $client = Get-ClientPoint $windowRect $center.x $center.y
+      $client = Get-ClientPoint $hwnd $windowRect $center.x $center.y
       Post-Click $hwnd $client.x $client.y ([string]$request.button)
       $delivered = 'posted'
     }
   } else {
     if ($request.x -eq $null -or $request.y -eq $null) { throw 'click requires elementId or (x, y)' }
-    $client = Get-ClientPoint $windowRect ([int]$request.x) ([int]$request.y)
+    $client = Get-ClientPoint $hwnd $windowRect ([int]$request.x) ([int]$request.y)
     Post-Click $hwnd $client.x $client.y ([string]$request.button)
     $delivered = 'posted'
   }
@@ -822,7 +849,7 @@ function Invoke-OpScroll($opArgs) {
   $delta = [int]($sign * $notches * $amount * 120)
   $wparam = [IntPtr][int64]($delta * 65536)
   $rect = Get-WindowRectInfo $hwnd
-  $client = Get-ClientPoint $rect ([int]($rect.x + $rect.width / 2)) ([int]($rect.y + $rect.height / 2))
+  $client = Get-ClientPoint $hwnd $rect ([int]($rect.x + $rect.width / 2)) ([int]($rect.y + $rect.height / 2))
   [void][DshClickWin32]::PostMessage($hwnd, 0x20A, $wparam, (Get-LParam $client.x $client.y))
   return (Get-ActionOutcome $hwnd 'scroll' 'posted' $null 'posted wheel message to the window')
 }

@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Declare `subprocess` as a hard inject. The Windows backend spawns `native/win32/dsh-click-helper.ps1` through `ctx.subprocess`, but the dependency was never declared — a composition without the subprocess row mounted the tools and then failed at call time instead of keeping the plugin pending until its dependency existed.
 - The audit gate no longer probes the append implementation's source text. On the `0.1.6-alpha.2` line `Session.append`'s third parameter carries a `SurfaceIntent` and only for surface-eligible event types, so an out-of-repo non-surface type can never be stamped with an `ignorable` marker; an unmarked unknown event would make a later reader refuse the stored log. `appendAuditEvent` now returns `'appended' | 'skipped-unknown-host'` and the two call sites surface the skip once per session as a warning. Tool outcomes are unchanged.
 - `app_launch` with no arguments omits `-ArgumentList` instead of binding an empty array, which could fail the launch outright.
+- Clicks and wheel posts map screen coordinates to the client area through `ScreenToClient`/`GetClientRect` instead of subtracting the window rectangle (which includes the border and title bar, so the old mapping landed roughly 8px/31px off). The mapping is non-regressive: if the interop call is unavailable the rectangle arithmetic and its containment check still run.
+- A refused focus fallback is now visible: `focusFallback: 'allow'` records the `SetForegroundWindow` verdict in the action outcome's `detail` instead of discarding it, so the model can see that the OS kept another window in front.
 
 ### Changed
 
