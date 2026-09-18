@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Declare `subprocess` as a hard inject. The Windows backend spawns `native/win32/dsh-click-helper.ps1` through `ctx.subprocess`, but the dependency was never declared — a composition without the subprocess row mounted the tools and then failed at call time instead of keeping the plugin pending until its dependency existed.
+- The audit gate no longer probes the append implementation's source text. On the `0.1.6-alpha.2` line `Session.append`'s third parameter carries a `SurfaceIntent` and only for surface-eligible event types, so an out-of-repo non-surface type can never be stamped with an `ignorable` marker; an unmarked unknown event would make a later reader refuse the stored log. `appendAuditEvent` now returns `'appended' | 'skipped-unknown-host'` and the two call sites surface the skip once per session as a warning. Tool outcomes are unchanged.
+- `app_launch` with no arguments omits `-ArgumentList` instead of binding an empty array, which could fail the launch outright.
+
 ### Changed
 
-- Implement the new `SubprocessRuntime.terminalEnvironment` member and `SubprocessHandle.control` field in the scripted test providers (0.1.6-alpha.1 extended the subprocess seam).
+- Document the real tool surface: `screen_find` is part of `capability.invocation`, and the "eight tools" wording in the source headers is now "nine tools" (the registry has registered nine all along).
+- Declare `dsh.manifestVersion: 1` and the canonical three-clause `engines.dsh` (G-3).
+- Implement the new `SubprocessRuntime.terminalEnvironment` member and `SubprocessHandle.control` field in the scripted test providers (0.1.6-alpha.1 extended the subprocess seam); the Loader composition profile now carries the `dsh-subprocess-local` row the new hard inject requires.
 
 ## [0.3.10] - 2026-09-12
 

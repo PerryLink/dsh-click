@@ -829,7 +829,13 @@ function Invoke-OpLaunch($opArgs) {
     $command = Get-Command $name -ErrorAction SilentlyContinue
     if ($command -ne $null) { $target = $command.Source } else { throw "cannot resolve application '$name' on the search path" }
   }
-  $process = Start-Process -FilePath $target -ArgumentList $launchArgs -PassThru
+  # An empty -ArgumentList binds to nothing useful and can fail the launch
+  # outright, so the parameter is omitted when there are no arguments.
+  if ($launchArgs.Count -gt 0) {
+    $process = Start-Process -FilePath $target -ArgumentList $launchArgs -PassThru
+  } else {
+    $process = Start-Process -FilePath $target -PassThru
+  }
   $path = $null
   try {
     $path = $process.Path
