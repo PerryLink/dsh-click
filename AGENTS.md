@@ -32,7 +32,7 @@ Standalone DeepSeek Harness plugin repository (`dsh-click`). Development follows
 
 ## Checks
 
-`pnpm run typecheck && pnpm run typecheck:ci && pnpm test && pnpm run build && pnpm run verify:self-contained && pnpm run check:lockfile && pnpm run verify:artifacts && pnpm run check:lockfile && pnpm pack`
+`pnpm run typecheck && pnpm run typecheck:ci && pnpm test && pnpm run build && pnpm run verify:self-contained && pnpm run verify:artifacts && pnpm run check:lockfile && pnpm pack`
 
 - `typecheck` resolves `@deepseek-ai/*` through tsconfig paths to the local harness checkout; `typecheck:ci` clears the paths and checks against the published `0.1.2-rc.1` types. Both must stay green — the package ships against 0.1.2-rc.1.
 - `verify:artifacts` also proves the tarball's ESM face imports under plain Node and that the native helper ships.
