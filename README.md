@@ -163,7 +163,7 @@ Example override in your profile patch:
 ```sh
 pnpm install        # node ^22.19 || >=24
 pnpm run typecheck  # tsc: src + tests against the local harness checkout
-pnpm run typecheck:ci  # tsc against the published 0.1.5-rc.2 types (no paths)
+pnpm run typecheck:ci  # tsc against the published 0.1.7-alpha.2 types (no paths)
 pnpm test           # vitest: 66 tests, 11 files (helper smoke runs on Windows)
 pnpm run build      # tsdown bundle + tsc declarations (lib/)
 pnpm run verify:self-contained  # dependency specs resolve from the registry
