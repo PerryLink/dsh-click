@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.13] - 2026-09-23
+
+### Changed
+
+- Move the `@deepseek-ai/dsh-*` dev/test pins to the published `0.1.7-alpha.2` line and record `0.1.7-alpha.2` in `dshWorkshop.compatibility.dshVersions`; the monthly Compat workflow now installs the `0.1.7-alpha.2` host (`dsh-base` + `dsh-headless`) instead of `0.1.6-alpha.2`.
+- Append `|| >=0.1.7-0 <0.2.0` to every declared host range — the `engines.dsh` field and all seven `@deepseek-ai/dsh-*` peer ranges. Under semver's prerelease rule a range whose only prerelease comparators sit on earlier tuples cannot admit a later alpha, so the previous band excluded the very host line this release targets. No previously supported host line is dropped, and the ranges remain declarations read back rather than enforced.
+- Raise the `@deepseek-ai/cordis` dev/test pin to `^4.0.4`.
+
+### Docs
+
+- All five READMEs now name `dsh-v0.1.7-alpha.2` as the verified line, and the `Development` block's `typecheck:ci` note no longer claims the ruler measures the published `0.1.5-rc.2` types; `AGENTS.md` is corrected the same way in its `tests/` layout entry and its `Checks` section, which had still named `0.1.2-rc.1` as the line the package ships against.
+
 ## [0.3.12] - 2026-09-19
 
 ### Added
