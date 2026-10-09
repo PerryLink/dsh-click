@@ -34,6 +34,14 @@
 Este plugin forma parte de la [familia de plugins DSH](https://github.com/PerryLink) (más de 40, todos Apache-2.0). Si te resulta útil, **dale una estrella**: no desbloquea nada, pero ayuda a que la siguiente persona lo encuentre antes.
 
 *English:* part of a 40+ plugin family for DeepSeek Harness. If it is useful, **a star helps the next person find it** — nothing is gated behind it.
+## What is dsh-click?
+
+Control nativo de escritorio multiplataforma para DeepSeek Harness — Windows primero.
+
+Mira la pantalla y luego actúa — cada clic autorizado, cada acción auditada.
+
+![Demostración de terminal de dsh-click: dsh-click — 8 native desktop tools, freshness-checked and approval-gated](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-demo.png)
+
 ## Compatibilidad
 
 | Superficie | Estado |
@@ -71,8 +79,12 @@ modelo                          harness
 ## Inicio rápido
 
 ```sh
+dsh plugin --profile web add github:PerryLink/dsh-click
+```
+
+```sh
 # 1. instala el bundle en tu perfil
-dsh plugin --profile web add "github:PerryLink/dsh-click#main"
+dsh plugin --profile web add github:PerryLink/dsh-click
 
 # o desde npm (versiones publicadas)
 dsh plugin --profile web add dsh-click
@@ -89,7 +101,7 @@ Luego pídele al agente que mire una ventana y actúe — el aviso de aprobació
 
 ## Instalación y desinstalación
 
-- **Canal git** (último `main`): `dsh plugin --profile web add "github:PerryLink/dsh-click#main"` — el script `prepare` compila solo con dependencias de producción.
+- **Canal git** (último `main`): `dsh plugin --profile web add github:PerryLink/dsh-click` — el script `prepare` compila solo con dependencias de producción.
 - **Canal npm** (versiones publicadas): `dsh plugin --profile web add dsh-click`.
 - **Canal tarball**: `pnpm pack` en este repositorio y luego `dsh plugin --profile web add ./dsh-click-<version>.tgz`.
 - **Desinstalar**: `dsh plugin --profile web remove dsh-click` (o elimina la fila del parche del perfil).

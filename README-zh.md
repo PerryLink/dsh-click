@@ -34,6 +34,14 @@
 这个插件是 [DSH 插件家族](https://github.com/PerryLink)的一员（40+ 个，全部 Apache-2.0）。如果你在用，**给个 star** —— 它不会解锁任何功能，但会让下一个人在搜索里更容易找到它。
 
 *English:* part of a 40+ plugin family for DeepSeek Harness. If it is useful, **a star helps the next person find it** — nothing is gated behind it.
+## What is dsh-click?
+
+DeepSeek Harness 的跨平台原生桌面控制 —— Windows 优先。
+
+先看清屏幕，再动手 —— 每次点击都过审批，每次操作都留审计。
+
+![dsh-click 终端演示：dsh-click — 8 native desktop tools, freshness-checked and approval-gated](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-demo.png)
+
 ## 兼容性
 
 | 方面 | 状态 |
@@ -71,8 +79,12 @@
 ## 快速开始
 
 ```sh
+dsh plugin --profile web add github:PerryLink/dsh-click
+```
+
+```sh
 # 1. 把 bundle 装进你的 profile
-dsh plugin --profile web add "github:PerryLink/dsh-click#main"
+dsh plugin --profile web add github:PerryLink/dsh-click
 
 # 或从 npm 安装（正式发布版）
 dsh plugin --profile web add dsh-click
@@ -89,7 +101,7 @@ dsh --profile web --dump-config | grep -A2 'id: dsh-click'
 
 ## 安装与卸载
 
-- **git 通道**（最新 `main`）：`dsh plugin --profile web add "github:PerryLink/dsh-click#main"` —— `prepare` 脚本仅用生产依赖构建。
+- **git 通道**（最新 `main`）：`dsh plugin --profile web add github:PerryLink/dsh-click` —— `prepare` 脚本仅用生产依赖构建。
 - **npm 通道**（正式发布版）：`dsh plugin --profile web add dsh-click`。
 - **tarball 通道**：在本仓库执行 `pnpm pack`，然后 `dsh plugin --profile web add ./dsh-click-<version>.tgz`。
 - **卸载**：`dsh plugin --profile web remove dsh-click`（或从 profile patch 中删除该行）。

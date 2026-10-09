@@ -36,6 +36,14 @@
 *English:* part of a 40+ plugin family for DeepSeek Harness. If it is useful, **a star helps the next person find it** — nothing is gated behind it.
 
 
+## What is dsh-click?
+
+Cross-platform native desktop control for DeepSeek Harness — Windows first.
+
+Look at the screen, then act — every click gated, every action audited.
+
+![Terminal demo of dsh-click: dsh-click — 8 native desktop tools, freshness-checked and approval-gated](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-demo.png)
+
 ## Compatibility
 
 | Surface | Status |
@@ -73,8 +81,12 @@ model                           harness
 ## Quick start
 
 ```sh
+dsh plugin --profile web add github:PerryLink/dsh-click
+```
+
+```sh
 # 1. install the bundle into your profile
-dsh plugin --profile web add "github:PerryLink/dsh-click#main"
+dsh plugin --profile web add github:PerryLink/dsh-click
 
 # or from npm (published releases)
 dsh plugin --profile web add dsh-click
@@ -91,7 +103,7 @@ Then ask the agent to look at a window and act — the approval prompt appears f
 
 ## Install & uninstall
 
-- **git channel** (latest `main`): `dsh plugin --profile web add "github:PerryLink/dsh-click#main"` — the `prepare` script builds with production dependencies only.
+- **git channel** (latest `main`): `dsh plugin --profile web add github:PerryLink/dsh-click` — the `prepare` script builds with production dependencies only.
 - **npm channel** (published releases): `dsh plugin --profile web add dsh-click`.
 - **tarball channel**: `pnpm pack` in this repo, then `dsh plugin --profile web add ./dsh-click-<version>.tgz`.
 - **uninstall**: `dsh plugin --profile web remove dsh-click` (or remove the row from the profile patch).
