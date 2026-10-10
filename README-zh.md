@@ -43,6 +43,10 @@ DeepSeek Harness 的跨平台原生桌面控制 —— Windows 优先。
 
 ![dsh-click 终端演示：dsh-click — 8 native desktop tools, freshness-checked and approval-gated](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-demo.png)
 
+![Animated terminal demo of dsh-click](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-demo.gif)
+
+*同一次运行，动图版。*
+
 ## 兼容性
 
 | 方面 | 状态 |

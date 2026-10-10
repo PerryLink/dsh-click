@@ -43,6 +43,10 @@ DeepSeek Harness के लिए क्रॉस-प्लेटफ़ॉर्
 
 ![dsh-click का टर्मिनल डेमो: dsh-click — 8 native desktop tools, freshness-checked and approval-gated](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-demo.png)
 
+![Animated terminal demo of dsh-click](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-demo.gif)
+
+*वही रन, एनिमेटेड।*
+
 ## संगतता
 
 | सतह | स्थिति |
