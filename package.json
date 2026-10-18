@@ -1,6 +1,6 @@
 {
   "name": "dsh-click",
-  "version": "0.3.21",
+  "version": "0.3.22",
   "description": "Cross-platform native desktop control tools for DeepSeek Harness (Windows first): screen_shot, screen_read (accessibility tree + pixel description for text-only models), click/type/scroll/key, and app_list/app_launch — every mutating action gated by approval, never stealing foreground focus, with stale-observation rejection and process-identity checks",
   "repository": {
     "type": "git",
@@ -117,10 +117,7 @@
     "@deepseek-ai/dsh-user-approval": ">=0.1.2-rc.1 <0.2.0 || >=0.1.5-alpha.1 <0.2.0 || >=0.1.6-0 <0.2.0 || >=0.1.7-0 <0.2.0 || >=0.2.0-0 <0.3.0 || >=0.2.1-0 <0.3.0",
     "@deepseek-ai/schemastery": "^3.18.5-alpha.1"
   },
-  "dependencies": {
-    "tsdown": "^0.22.14",
-    "typescript": "^5.9.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.5-alpha.1",
     "@deepseek-ai/cordis-plugin-include": "^1.0.10-alpha.1",
@@ -139,7 +136,9 @@
     "@vitest/coverage-v8": "3.2.0",
     "oxlint": "0.18.1",
     "vitest": "^3.2.0",
-    "@deepseek-ai/dsh-working-directory": "0.2.1-rc.2"
+    "@deepseek-ai/dsh-working-directory": "0.2.1-rc.2",
+    "tsdown": "^0.22.14",
+    "typescript": "^5.9.0"
   },
   "scripts": {
     "build": "node scripts/prepare.mjs",
