@@ -396,7 +396,7 @@ function Find-ElementByRuntimeId($windowElement, $runtimeIdText) {
   $ids = @()
   foreach ($part in ($runtimeIdText -split '\.')) { $ids += [int]$part }
   if ($ids.Count -eq 0) { return $null }
-  $condition = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::RuntimeIdProperty, $ids)
+  $condition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::RuntimeIdProperty, [int[]]$ids)
   try {
     return $windowElement.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $condition)
   } catch {
@@ -478,11 +478,10 @@ function Get-KeyMap() {
   $map['MENU'] = @(0x12, $false)
   $map['WIN'] = @(0x5B, $false)
   $map['WINDOWS'] = @(0x5B, $false)
-  foreach ($n in 1..12) { $map["F$n"] = @(0x6F + $n, $true) }
-  foreach ($c in 0..9) { $map["$c"] = @(0x30 + $c, $true) }
-  foreach ($c in 'A'..'Z') {
-    $code = [int][char]$c
-    $map[$c] = @(0x41 + ($code - 65), $true)
+  foreach ($n in 1..12) { $map["F$n"] = @((0x6F + $n), $true) }
+  foreach ($c in 0..9) { $map["$c"] = @((0x30 + $c), $true) }
+  foreach ($code in 65..90) {
+    $map[[string][char]$code] = @((0x41 + ($code - 65)), $true)
   }
   return $map
 }

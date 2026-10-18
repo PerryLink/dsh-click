@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.23] - 2026-10-19
+
+### Fixed
+
+- **`elementId` click/type and every `key` combination on Windows (issue #20).** `Find-ElementByRuntimeId` builds an `Int32[]` and passes it via the `PropertyCondition` constructor; the F-key/digit map uses explicit parentheses around the arithmetic; and the A–Z map iterates `65..90` with string keys, matching `Post-KeyCombo`'s lookup. Three one-line helper defects that made these paths throw before posting input.
+
 ## [0.3.22] - 2026-10-18
 
 ### Changed
