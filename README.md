@@ -208,6 +208,7 @@ pnpm pack           # the published tarball
 
 ## Contributors
 
+- [Windows helper smoke checklist](docs/windows-smoke.md) — real input/focus verification for 0.3.24+.
 - [@LIU12312-Source](https://github.com/LIU12312-Source) — real `SendInput`/foreground-focus fallback for the Windows helper (PR #21).
 - [@PerryLink](https://github.com/PerryLink) — creator and maintainer: tool surface, action safety boundary, Windows native helper, sanitizers, and the five-language docs.
 - [@Mchsd](https://github.com/Mchsd) — added the `auditSessionEvents` opt-out for harnesses whose session reader rejects the `dsh-click` audit events (#2).
