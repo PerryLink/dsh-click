@@ -147,6 +147,22 @@ app_list
 
 *来源 `plugins/dsh-click/tests/tools.spec.ts:159-185; renderer at src/tools.ts:933-942`*
 
+#### 失败分支
+
+**输入**
+
+~~~text
+{}
+~~~
+
+**输出**
+
+~~~text
+Error: dsh-click backend unavailable on linux: Linux backend is reserved but not implemented yet (Windows-first); only Windows can act today
+~~~
+
+*来源 `plugins/dsh-click/src/platform/selection.ts:61-62,81; plugins/dsh-click/src/tools.ts:133-136; plugins/dsh-click/tests/tools.spec.ts:226-245`*
+
 #### 简短示例
 
 - `screen_read`

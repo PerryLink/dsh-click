@@ -147,6 +147,22 @@ app_list
 
 *Observado en `plugins/dsh-click/tests/tools.spec.ts:159-185; renderer at src/tools.ts:933-942`*
 
+#### Rama de fallo
+
+**Entrada**
+
+~~~text
+{}
+~~~
+
+**Salida**
+
+~~~text
+Error: dsh-click backend unavailable on linux: Linux backend is reserved but not implemented yet (Windows-first); only Windows can act today
+~~~
+
+*Observado en `plugins/dsh-click/src/platform/selection.ts:61-62,81; plugins/dsh-click/src/tools.ts:133-136; plugins/dsh-click/tests/tools.spec.ts:226-245`*
+
 #### Ejemplos breves
 
 - `screen_read`
