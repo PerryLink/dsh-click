@@ -55,9 +55,10 @@ Controle nativo de desktop multiplataforma para o DeepSeek Harness — Windows p
 
 Olhe para a tela e então aja — cada clique autorizado, cada ação auditada.
 
-![Demonstração de terminal do dsh-click: dsh-click — 8 native desktop tools, freshness-checked and approval-gated](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-hero.png)
+![Diagrama de fluxo de dsh-click: instalar → abrir painel → agir.](docs/assets/dsh-click-flow.svg)
 
-![Animated terminal demo of dsh-click](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-demo.gif)
+*Visão geral do fluxo: instalar → abrir painel → agir. Os exemplos abaixo usam a superfície real de comandos.*
+
 
 *A mesma execução, animada.*
 
@@ -117,6 +118,19 @@ Depois peça ao agente para olhar uma janela e agir — o aviso de aprovação a
 ```
 > Abra o Bloco de Notas, digite "olá" e leia de volta o que está na tela.
 ```
+
+### Exemplos
+
+São os pontos de entrada reais; instale e chame um.
+
+#### Exemplo detalhado
+
+- `screen_shot`
+
+#### Exemplos breves
+
+- `screen_read`
+- `app_list`
 
 ## Configuração
 

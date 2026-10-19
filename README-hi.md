@@ -55,9 +55,10 @@ DeepSeek Harness के लिए क्रॉस-प्लेटफ़ॉर्
 
 पहले स्क्रीन देखें, फिर काम करें — हर क्लिक स्वीकृत, हर क्रिया ऑडिटेड।
 
-![dsh-click का टर्मिनल डेमो: dsh-click — 8 native desktop tools, freshness-checked and approval-gated](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-hero.png)
+![dsh-click कार्यप्रवाह आरेख: इंस्टॉल → पैनल खोलें → कार्य।](docs/assets/dsh-click-flow.svg)
 
-![Animated terminal demo of dsh-click](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-demo.gif)
+*कार्यप्रवाह: इंस्टॉल → पैनल खोलें → कार्य। नीचे के उदाहरण वास्तविक कमांड सतह का उपयोग करते हैं।*
+
 
 *वही रन, एनिमेटेड।*
 
@@ -117,6 +118,19 @@ dsh --profile web --dump-config | grep -A2 'id: dsh-click'
 ```
 > नोटपैड खोलें, "नमस्ते" टाइप करें, फिर स्क्रीन पर जो है उसे वापस पढ़ें।
 ```
+
+### उदाहरण
+
+ये वास्तविक प्रवेश बिंदु हैं; इंस्टॉल के बाद एक चलाएँ।
+
+#### विस्तृत उदाहरण
+
+- `screen_shot`
+
+#### संक्षिप्त उदाहरण
+
+- `screen_read`
+- `app_list`
 
 ## कॉन्फ़िगरेशन
 

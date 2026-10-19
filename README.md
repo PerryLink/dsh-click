@@ -56,11 +56,11 @@ Cross-platform native desktop control for DeepSeek Harness — Windows first.
 
 Look at the screen, then act — every click gated, every action audited.
 
-![Terminal demo of dsh-click: dsh-click — 8 native desktop tools, freshness-checked and approval-gated](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-hero.png)
+![Workflow diagram for dsh-click: install → open panel → act.](docs/assets/dsh-click-flow.svg)
 
-![Animated terminal demo of dsh-click](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-demo.gif)
+*Workflow overview: install → open panel → act. The examples below use the real command surface.*
 
-*The same run, animated.*
+
 
 ## Compatibility
 
@@ -118,6 +118,19 @@ Then ask the agent to look at a window and act — the approval prompt appears f
 ```
 > Open Notepad, type "hello", then read back what is on screen.
 ```
+
+### Examples
+
+These are the plugin's real entry points; install once, then call one.
+
+#### Detailed example
+
+- `screen_shot`
+
+#### Brief examples
+
+- `screen_read`
+- `app_list`
 
 ## Configuration
 

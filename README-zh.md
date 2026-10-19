@@ -46,9 +46,10 @@ DeepSeek Harness 的跨平台原生桌面控制 —— Windows 优先。
 
 先看清屏幕，再动手 —— 每次点击都过审批，每次操作都留审计。
 
-![dsh-click 终端演示：dsh-click — 8 native desktop tools, freshness-checked and approval-gated](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-hero.png)
+![dsh-click 工作流图：安装 → 打开面板 → 操作。](docs/assets/dsh-click-flow.svg)
 
-![Animated terminal demo of dsh-click](https://raw.githubusercontent.com/PerryLink/dsh-click/main/docs/assets/dsh-click-demo.gif)
+*工作流概览：安装 → 打开面板 → 操作。下面的示例使用实际命令面。*
+
 
 *同一次运行，动图版。*
 
@@ -117,6 +118,19 @@ dsh --profile web --dump-config | grep -A2 'id: dsh-click'
 - **卸载**：`dsh plugin --profile web remove dsh-click`（或从 profile patch 中删除该行）。
 
 > 如果 pnpm 对本包报 `ERR_PNPM_IGNORED_BUILDS`（esbuild 的平台二进制无害校验），在你的 `pnpm-workspace.yaml` 中加入 `allowBuilds: { esbuild: true }` —— `dsh` CLI 会打印确切片段。
+
+### 示例
+
+以下为插件真实入口；安装后调用一个即可。
+
+#### 详细示例
+
+- `screen_shot`
+
+#### 简短示例
+
+- `screen_read`
+- `app_list`
 
 ## 配置
 
