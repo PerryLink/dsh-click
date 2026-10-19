@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.24] - 2026-10-19
+
+### Fixed
+
+- **Real keyboard input and foreground focus for the Windows helper (PR #21).** `type` now uses `SendInput` with `KEYEVENTF_UNICODE` (CJK-safe) instead of relying only on posted `WM_CHAR`, and element/key actions can bring the target window to the foreground via `AttachThreadInput` + `SetForegroundWindow` + `SetFocus`. The UIA `ValuePattern` fast path remains. Credit: @LIU12312-Source.
+
 ## [0.3.23] - 2026-10-19
 
 ### Fixed

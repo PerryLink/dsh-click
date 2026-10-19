@@ -1,4 +1,4 @@
-# dsh-click native helper (Windows PowerShell 5.1).
+﻿# dsh-click native helper (Windows PowerShell 5.1).
 #
 # One request = one process: JSON request on stdin, JSON response on stdout
 # (exit code 0 even for handled failures; the error envelope is the response).
@@ -56,6 +56,87 @@ public static class DshClickWin32 {
 
   [DllImport("user32.dll")]
   public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+  // ---- dsh-click input patch: real keyboard injection + reliable focus ----
+  [DllImport("user32.dll")]
+  public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+  [DllImport("user32.dll")]
+  public static extern IntPtr SetFocus(IntPtr hWnd);
+
+  [DllImport("user32.dll")]
+  public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+  [DllImport("user32.dll")]
+  public static extern bool IsIconic(IntPtr hWnd);
+
+  [DllImport("kernel32.dll")]
+  public static extern uint GetCurrentThreadId();
+
+  [DllImport("user32.dll")]
+  public static extern short VkKeyScanW(char ch);
+
+  [StructLayout(LayoutKind.Sequential)]
+  public struct KEYBDINPUT {
+    public ushort wVk;
+    public ushort wScan;
+    public uint dwFlags;
+    public uint time;
+    public IntPtr dwExtraInfo;
+  }
+
+  [StructLayout(LayoutKind.Explicit, Size = 40)]
+  public struct INPUT {
+    [FieldOffset(0)] public uint type;
+    [FieldOffset(8)] public KEYBDINPUT ki;
+  }
+
+  [DllImport("user32.dll", SetLastError = true)]
+  public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+  public static uint SendUnicodeText(string text) {
+    if (string.IsNullOrEmpty(text)) return 0;
+    var list = new List<INPUT>();
+    foreach (char c in text) {
+      INPUT down = new INPUT();
+      down.type = 1;
+      down.ki.wScan = (ushort)c;
+      down.ki.dwFlags = 0x0004;
+      list.Add(down);
+      INPUT up = new INPUT();
+      up.type = 1;
+      up.ki.wScan = (ushort)c;
+      up.ki.dwFlags = 0x0004 | 0x0002;
+      list.Add(up);
+    }
+    return SendInput((uint)list.Count, list.ToArray(), Marshal.SizeOf(typeof(INPUT)));
+  }
+
+  public static uint SendVirtualKey(ushort vk, bool up) {
+    INPUT inp = new INPUT();
+    inp.type = 1;
+    inp.ki.wVk = vk;
+    inp.ki.dwFlags = up ? 0x0002u : 0u;
+    return SendInput(1, new INPUT[] { inp }, Marshal.SizeOf(typeof(INPUT)));
+  }
+
+  public static bool BringToFront(IntPtr hWnd) {
+    if (IsIconic(hWnd)) ShowWindow(hWnd, 9);
+    if (GetForegroundWindow() == hWnd) return true;
+    IntPtr fg = GetForegroundWindow();
+    uint ignored;
+    uint fgThread = GetWindowThreadProcessId(fg, out ignored);
+    uint targetThread = GetWindowThreadProcessId(hWnd, out ignored);
+    uint myThread = GetCurrentThreadId();
+    bool a1 = AttachThreadInput(myThread, fgThread, true);
+    bool a2 = AttachThreadInput(myThread, targetThread, true);
+    SetForegroundWindow(hWnd);
+    SetFocus(hWnd);
+    if (a2) AttachThreadInput(myThread, targetThread, false);
+    if (a1) AttachThreadInput(myThread, fgThread, false);
+    System.Threading.Thread.Sleep(40);
+    return GetForegroundWindow() == hWnd;
+  }
 
   [StructLayout(LayoutKind.Sequential)]
   public struct POINT { public int X; public int Y; }
@@ -396,7 +477,7 @@ function Find-ElementByRuntimeId($windowElement, $runtimeIdText) {
   $ids = @()
   foreach ($part in ($runtimeIdText -split '\.')) { $ids += [int]$part }
   if ($ids.Count -eq 0) { return $null }
-  $condition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::RuntimeIdProperty, [int[]]$ids)
+  $condition = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::RuntimeIdProperty, [int[]]$ids)
   try {
     return $windowElement.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $condition)
   } catch {
@@ -449,45 +530,30 @@ function Post-Click($hwnd, $cx, $cy, $button) {
   [void][DshClickWin32]::PostMessage($hwnd, $up, [IntPtr]0, $lparam)
 }
 
-function Get-KeyMap() {
-  $map = @{}
-  $map['ENTER'] = @(0x0D, $true)
-  $map['RETURN'] = @(0x0D, $true)
-  $map['TAB'] = @(0x09, $true)
-  $map['ESC'] = @(0x1B, $true)
-  $map['ESCAPE'] = @(0x1B, $true)
-  $map['BACKSPACE'] = @(0x08, $true)
-  $map['DELETE'] = @(0x2E, $true)
-  $map['DEL'] = @(0x2E, $true)
-  $map['SPACE'] = @(0x20, $true)
-  $map['INSERT'] = @(0x2D, $true)
-  $map['HOME'] = @(0x24, $true)
-  $map['END'] = @(0x23, $true)
-  $map['PAGEUP'] = @(0x21, $true)
-  $map['PGUP'] = @(0x21, $true)
-  $map['PAGEDOWN'] = @(0x22, $true)
-  $map['PGDN'] = @(0x22, $true)
-  $map['UP'] = @(0x26, $true)
-  $map['DOWN'] = @(0x28, $true)
-  $map['LEFT'] = @(0x25, $true)
-  $map['RIGHT'] = @(0x27, $true)
-  $map['CTRL'] = @(0x11, $false)
-  $map['CONTROL'] = @(0x11, $false)
-  $map['SHIFT'] = @(0x10, $false)
-  $map['ALT'] = @(0x12, $false)
-  $map['MENU'] = @(0x12, $false)
-  $map['WIN'] = @(0x5B, $false)
-  $map['WINDOWS'] = @(0x5B, $false)
-  foreach ($n in 1..12) { $map["F$n"] = @((0x6F + $n), $true) }
-  foreach ($c in 0..9) { $map["$c"] = @((0x30 + $c), $true) }
-  foreach ($code in 65..90) {
-    $map[[string][char]$code] = @((0x41 + ($code - 65)), $true)
+function Get-VirtualKey([string]$token) {
+  $names = @{
+    'ENTER' = 0x0D; 'RETURN' = 0x0D; 'TAB' = 0x09; 'ESC' = 0x1B; 'ESCAPE' = 0x1B;
+    'SPACE' = 0x20; 'BACKSPACE' = 0x08; 'DELETE' = 0x2E; 'DEL' = 0x2E; 'INSERT' = 0x2D;
+    'HOME' = 0x24; 'END' = 0x23; 'PAGEUP' = 0x21; 'PGUP' = 0x21; 'PAGEDOWN' = 0x22; 'PGDN' = 0x22;
+    'UP' = 0x26; 'DOWN' = 0x28; 'LEFT' = 0x25; 'RIGHT' = 0x27;
+    'CTRL' = 0x11; 'CONTROL' = 0x11; 'SHIFT' = 0x10; 'ALT' = 0x12; 'MENU' = 0x12;
+    'WIN' = 0x5B; 'WINDOWS' = 0x5B; 'LWIN' = 0x5B; 'RWIN' = 0x5C; 'APPS' = 0x5D;
+    'CAPSLOCK' = 0x14; 'NUMLOCK' = 0x90; 'SCROLLLOCK' = 0x91; 'PRINTSCREEN' = 0x2C;
+    'PAUSE' = 0x13; 'COMMA' = 0xBC; 'PERIOD' = 0xBE; 'SLASH' = 0xBF; 'SEMICOLON' = 0xBA;
+    'QUOTE' = 0xDE; 'LBRACKET' = 0xDB; 'RBRACKET' = 0xDD; 'BACKSLASH' = 0xDC;
+    'MINUS' = 0xBD; 'PLUS' = 0xBB; 'TILDE' = 0xC0
   }
-  return $map
+  if ($names.ContainsKey($token)) { return [int]$names[$token] }
+  if ($token -match '^F([1-9]|1[0-2])$') { return 0x6F + [int]$Matches[1] }
+  if ($token.Length -eq 1) {
+    $scan = [DshClickWin32]::VkKeyScanW([char]$token)
+    if ($scan -ne -1) { return [int]($scan -band 0xFF) }
+    return [int][char]$token
+  }
+  throw "unknown key '$token'"
 }
 
 function Post-KeyCombo($hwnd, $keysText) {
-  $map = Get-KeyMap
   $tokens = @()
   foreach ($token in ($keysText -split '\+')) {
     $trimmed = $token.Trim()
@@ -495,39 +561,37 @@ function Post-KeyCombo($hwnd, $keysText) {
     $tokens += $trimmed.ToUpperInvariant()
   }
   if ($tokens.Count -eq 0) { throw 'empty key combination' }
+  $modifierNames = @('CTRL', 'CONTROL', 'SHIFT', 'ALT', 'MENU', 'WIN', 'WINDOWS', 'LWIN', 'RWIN')
   $modifiers = @()
   $mainKeys = @()
   foreach ($token in $tokens) {
-    if ($token -in @('CTRL', 'CONTROL', 'SHIFT', 'ALT', 'MENU', 'WIN', 'WINDOWS')) {
-      $modifiers += $token
-    } elseif ($map.ContainsKey($token)) {
-      $mainKeys += $token
-    } elseif ($token.Length -eq 1) {
-      $mainKeys += $token
-    } else {
-      throw "unknown key '$token'"
+    if ($modifierNames -contains $token) { $modifiers += $token } else { $mainKeys += $token }
+  }
+  $focused = $false
+  try { $focused = [DshClickWin32]::BringToFront($hwnd) } catch { $focused = $false }
+  if (-not $focused) {
+    # Last resort: posted messages (only works for windows that accept posted input).
+    foreach ($modifier in $modifiers) {
+      [void][DshClickWin32]::PostMessage($hwnd, 0x100, [IntPtr](Get-VirtualKey $modifier), [IntPtr]0)
     }
+    foreach ($key in $mainKeys) {
+      $vk = Get-VirtualKey $key
+      [void][DshClickWin32]::PostMessage($hwnd, 0x100, [IntPtr]$vk, [IntPtr]0)
+      [void][DshClickWin32]::PostMessage($hwnd, 0x101, [IntPtr]$vk, [IntPtr]0)
+    }
+    for ($i = $modifiers.Count - 1; $i -ge 0; $i--) {
+      [void][DshClickWin32]::PostMessage($hwnd, 0x101, [IntPtr](Get-VirtualKey $modifiers[$i]), [IntPtr]0)
+    }
+    return
   }
-  foreach ($modifier in $modifiers) {
-    $entry = $map[$modifier]
-    [void][DshClickWin32]::PostMessage($hwnd, 0x100, [IntPtr]$entry[0], [IntPtr]0)
-  }
+  foreach ($modifier in $modifiers) { [void][DshClickWin32]::SendVirtualKey([uint16](Get-VirtualKey $modifier), $false) }
   foreach ($key in $mainKeys) {
-    $isSpecial = $map.ContainsKey($key)
-    if ($isSpecial) {
-      $entry = $map[$key]
-      [void][DshClickWin32]::PostMessage($hwnd, 0x100, [IntPtr]$entry[0], [IntPtr]0)
-      [void][DshClickWin32]::PostMessage($hwnd, 0x101, [IntPtr]$entry[0], [IntPtr]0)
-    } else {
-      $charCode = [int][char]$key
-      [void][DshClickWin32]::PostMessage($hwnd, 0x100, [IntPtr]$charCode, [IntPtr]0)
-      [void][DshClickWin32]::PostMessage($hwnd, 0x102, [IntPtr]$charCode, [IntPtr]0)
-      [void][DshClickWin32]::PostMessage($hwnd, 0x101, [IntPtr]$charCode, [IntPtr]0)
-    }
+    $vk = [uint16](Get-VirtualKey $key)
+    [void][DshClickWin32]::SendVirtualKey($vk, $false)
+    [void][DshClickWin32]::SendVirtualKey($vk, $true)
   }
   for ($i = $modifiers.Count - 1; $i -ge 0; $i--) {
-    $entry = $map[$modifiers[$i]]
-    [void][DshClickWin32]::PostMessage($hwnd, 0x101, [IntPtr]$entry[0], [IntPtr]0)
+    [void][DshClickWin32]::SendVirtualKey([uint16](Get-VirtualKey $modifiers[$i]), $true)
   }
 }
 
@@ -799,14 +863,26 @@ function Invoke-OpType($opArgs) {
       throw "type failed and rollback $(if ($restored) { 'restored the original text' } else { 'could NOT restore the original text' }): $($_.Exception.Message)"
     }
   }
-  if ($focusFallback) {
-    foreach ($ch in [char[]][string]$request.text) {
-      $charCode = [int]$ch
-      [void][DshClickWin32]::PostMessage($hwnd, 0x102, [IntPtr]$charCode, [IntPtr]0)
+  # dsh-click input patch: real keyboard input (SendInput) instead of posted WM_CHAR.
+  $center = Get-ElementCenter $element
+  $windowRect = Get-WindowRectInfo $hwnd
+  $client = Get-ClientPoint $hwnd $windowRect $center.x $center.y
+  Post-Click $hwnd $client.x $client.y 'left'
+  $focused = $false
+  try { $focused = [DshClickWin32]::BringToFront($hwnd) } catch { $focused = $false }
+  if ($focused) {
+    $sent = [DshClickWin32]::SendUnicodeText([string]$request.text)
+    if ($sent -gt 0) {
+      return (Get-ActionOutcome $hwnd 'type' 'posted' $null "typed $($sent / 2) chars via SendInput")
     }
-    return (Get-ActionOutcome $hwnd 'type' 'posted' $null 'typed via posted WM_CHAR (no value pattern on the element)')
   }
-  throw "element '$($request.elementId)' exposes no value pattern and focusFallback is disabled - refusing to type into it"
+  if (-not $focusFallback) {
+    throw "element '$($request.elementId)' exposes no value pattern and the window could not be focused - refusing to type into it"
+  }
+  foreach ($ch in [char[]][string]$request.text) {
+    [void][DshClickWin32]::PostMessage($hwnd, 0x102, [IntPtr][int]$ch, [IntPtr]0)
+  }
+  return (Get-ActionOutcome $hwnd 'type' 'posted' $null 'typed via posted WM_CHAR (SendInput unavailable)')
 }
 
 function Invoke-OpScroll($opArgs) {
