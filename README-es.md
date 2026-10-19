@@ -125,7 +125,27 @@ Son los puntos de entrada reales; instala y llama a uno.
 
 #### Ejemplo detallado
 
-- `screen_shot`
+**Comando**
+
+~~~sh
+app_list
+~~~
+
+**Entrada**
+
+~~~json
+{}
+~~~
+
+**Salida**
+
+~~~text
+1 running application(s) with windows:
+- Demo (pid 4242, C:\Apps\demo.exe)
+  - [windowId 1122867] "Demo App" at (10, 20) 800x600
+~~~
+
+*Observado en `plugins/dsh-click/tests/tools.spec.ts:159-185; renderer at src/tools.ts:933-942`*
 
 #### Ejemplos breves
 

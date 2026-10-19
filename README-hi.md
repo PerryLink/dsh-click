@@ -125,7 +125,27 @@ dsh --profile web --dump-config | grep -A2 'id: dsh-click'
 
 #### विस्तृत उदाहरण
 
-- `screen_shot`
+**कमांड**
+
+~~~sh
+app_list
+~~~
+
+**इनपुट**
+
+~~~json
+{}
+~~~
+
+**आउटपुट**
+
+~~~text
+1 running application(s) with windows:
+- Demo (pid 4242, C:\Apps\demo.exe)
+  - [windowId 1122867] "Demo App" at (10, 20) 800x600
+~~~
+
+*स्रोत `plugins/dsh-click/tests/tools.spec.ts:159-185; renderer at src/tools.ts:933-942`*
 
 #### संक्षिप्त उदाहरण
 
