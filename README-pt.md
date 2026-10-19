@@ -210,7 +210,7 @@ pnpm pack           # o tarball publicado
 - [@PerryLink](https://github.com/PerryLink) — criador e mantenedor: superfície de ferramentas, fronteira de segurança das ações, helper nativo do Windows, sanitizadores e a documentação em cinco idiomas.
 - [@Mchsd](https://github.com/Mchsd) — adicionou a opção `auditSessionEvents` para harnesses cujo leitor de sessão rejeita os eventos de auditoria do `dsh-click` (#2).
 
-## Família de plugins DSH da PerryLink
+## PerryLink DSH Plugin Family
 
 Este projeto faz parte da família de plugins do DeepSeek Harness da [PerryLink](https://github.com/PerryLink). O registro fica recolhido abaixo para que cada README mantenha uma primeira tela curta; expanda para ver cada linha e seu status.
 
