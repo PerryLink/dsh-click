@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.25] - 2026-10-26
+
+### Added
+
+- **`staleCheckTree: "strict" | "off"` (default `strict`) — an explicit escape hatch for windows with a ticking clock, cursor, spinner, or live memory label (issue #29).** `strict` preserves the existing whole-window tree-hash refusal; `off` skips only the tree hash, while identity, observation age, and (unless `staleCheckPixels: false`) pixel checks still apply. This makes dynamic windows operable today; per-element scoped verification remains the planned default replacement.
+
 ## [0.3.24] - 2026-10-19
 
 ### Fixed

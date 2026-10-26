@@ -183,6 +183,7 @@ Error: dsh-click backend unavailable on linux: Linux backend is reserved but not
 | `maxHelperOutputBytes` | `25165824` | 单次 helper 响应的字节上限（1024..67108864） |
 | `maxScreenshotSide` | `2560` | 截图最长边像素（320..7680）；超出即缩放 |
 | `staleCheckPixels` | `true` | 每次操作前对比新像素哈希，变化即拒绝 |
+| `staleCheckTree` | `strict` | 整窗控件树新鲜度：`strict` 任一节点变化即拒绝；`off` 跳过整树哈希（时钟/光标的逃生口；身份/年龄/像素检查仍生效） |
 | `maxObservationAgeMs` | `30000` | 操作可引用观察的最大时限（毫秒，1000..600000） |
 | `maxCachedObservations` | `8` | 观察缓存 LRU 上限（1..64） |
 | `maxElements` | `500` | 每次 `screen_read` 的无障碍元素上限（1..2000） |

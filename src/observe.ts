@@ -103,8 +103,9 @@ export class ObservationStore {
 
   /**
    * Compare a fresh re-observation against the cited record. The verdict is
-   * `ok` only when identity (window/pid/exe/title/class/rect), the tree hash,
-   * and — when `staleCheckPixels` is on — the pixel hash all still match, and
+   * `ok` only when identity (window/pid/exe/title/class/rect), the tree hash
+   * (unless `staleCheckTree: 'off'`), and — when `staleCheckPixels` is on — the
+   * pixel hash all still match, and
    * the record is not older than `maxObservationAgeMs`.
    *
    * @param record - the observation the action cites.
@@ -134,7 +135,7 @@ export class ObservationStore {
         detail: `window ${record.windowId} no longer matches observation ${record.id} (title/class/process or rect changed)`,
       }
     }
-    if (fresh.treeHash !== record.treeHash) {
+    if (this.config.staleCheckTree !== 'off' && fresh.treeHash !== record.treeHash) {
       return {
         ok: false,
         code: 'STALE_TREE',

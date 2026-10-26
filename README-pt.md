@@ -183,6 +183,7 @@ Todos os ajustes são campos `Config` do Schemastery (alteráveis pelo cordis.ym
 | `maxHelperOutputBytes` | `25165824` | Limite de uma resposta do helper em bytes (1024..67108864) |
 | `maxScreenshotSide` | `2560` | Maior lado da captura em pixels (320..7680); capturas maiores são reduzidas |
 | `staleCheckPixels` | `true` | Comparar um hash de pixels novo antes de cada ação e recusar se mudou |
+| `staleCheckTree` | `strict` | Frescor da árvore de toda a janela: `strict` recusa qualquer nó alterado; `off` ignora o hash da árvore (escape para relógios/cursores; identidade/idade/pixels continuam valendo) |
 | `maxObservationAgeMs` | `30000` | Idade máxima em ms de uma observação que uma ação pode citar (1000..600000) |
 | `maxCachedObservations` | `8` | Limite LRU de observações em cache (1..64) |
 | `maxElements` | `500` | Limite de elementos de acessibilidade por `screen_read` (1..2000) |

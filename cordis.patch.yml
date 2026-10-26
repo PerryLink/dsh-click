@@ -34,6 +34,10 @@
         # stale-state boundary). Disable only for tooling that mutates the
         # screen faster than the check can run.
         staleCheckPixels: true
+        # 'strict' refuses any changed tree node; 'off' skips the whole-tree
+        # hash for windows with a ticking clock/cursor (identity/age/pixel
+        # checks still apply).
+        staleCheckTree: strict
         # Maximum age in ms of an observation that an action may still base
         # on (1000..600000). Older observations are refused and must be
         # re-observed.

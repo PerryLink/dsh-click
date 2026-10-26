@@ -64,6 +64,13 @@ describe('ObservationStore', () => {
     expect(store.verify(record, snapshot({ treeHash: 'tree-hash-2' }))).toMatchObject({ ok: false, code: 'STALE_TREE' })
   })
 
+  it('tolerates tree drift when staleCheckTree is off, but still refuses identity drift', () => {
+    const relaxed = new ObservationStore(resolveConfig({ staleCheckTree: 'off' }))
+    const record = relaxed.record(snapshot())
+    expect(relaxed.verify(record, snapshot({ treeHash: 'tree-hash-2' }))).toEqual({ ok: true })
+    expect(relaxed.verify(record, snapshot({ title: 'Changed', treeHash: 'tree-hash-2' }))).toMatchObject({ ok: false, code: 'STALE_IDENTITY' })
+  })
+
   it('refuses pixel drift, and tolerates it when staleCheckPixels is off', () => {
     const strict = new ObservationStore(resolveConfig({}))
     const record = strict.record(snapshot())
