@@ -20,7 +20,7 @@ describe('Config schema', () => {
     expect(resolved.maxHelperOutputBytes).toBe(24 * 1024 * 1024)
     expect(resolved.maxScreenshotSide).toBe(2560)
     expect(resolved.staleCheckPixels).toBe(true)
-    expect(resolved.staleCheckTree).toBe('strict')
+    expect(resolved.staleCheckTree).toBe('target')
     expect(resolved.maxObservationAgeMs).toBe(30_000)
     expect(resolved.maxCachedObservations).toBe(8)
     expect(resolved.maxElements).toBe(500)
@@ -60,6 +60,7 @@ describe('resolveConfig', () => {
     expect(() => resolveConfig({ requireApproval: 'yes' as unknown as boolean })).toThrow()
     expect(() => resolveConfig({ staleCheckPixels: 1 as unknown as boolean })).toThrow()
     expect(resolveConfig({ staleCheckTree: 'off' }).staleCheckTree).toBe('off')
+    expect(resolveConfig({ staleCheckTree: 'strict' }).staleCheckTree).toBe('strict')
     expect(() => resolveConfig({ staleCheckTree: 'loose' as unknown as 'strict' })).toThrow()
   })
 

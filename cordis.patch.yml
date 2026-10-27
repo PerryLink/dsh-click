@@ -37,7 +37,7 @@
         # 'strict' refuses any changed tree node; 'off' skips the whole-tree
         # hash for windows with a ticking clock/cursor (identity/age/pixel
         # checks still apply).
-        staleCheckTree: strict
+        staleCheckTree: target
         # Maximum age in ms of an observation that an action may still base
         # on (1000..600000). Older observations are refused and must be
         # re-observed.

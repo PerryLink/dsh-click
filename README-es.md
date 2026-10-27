@@ -183,7 +183,7 @@ Todos los ajustes son campos `Config` de Schemastery (modificables desde cordis.
 | `maxHelperOutputBytes` | `25165824` | Límite de una respuesta del helper en bytes (1024..67108864) |
 | `maxScreenshotSide` | `2560` | Lado más largo de la captura en píxeles (320..7680); las mayores se reducen |
 | `staleCheckPixels` | `true` | Comparar un hash de píxeles fresco antes de cada acción y rechazar si cambió |
-| `staleCheckTree` | `strict` | Frescura del árbol de toda la ventana: `strict` rechaza cualquier nodo cambiado; `off` omite el hash del árbol (escape para relojes/cursores; identidad/edad/píxeles siguen aplicando) |
+| `staleCheckTree` | `target` | Frescura del árbol: `target` verifica el elemento destino (por defecto), `strict` rechaza cualquier nodo cambiado, `off` omite el hash del árbol |
 | `maxObservationAgeMs` | `30000` | Antigüedad máxima en ms de una observación que una acción puede citar (1000..600000) |
 | `maxCachedObservations` | `8` | Límite LRU de observaciones en caché (1..64) |
 | `maxElements` | `500` | Límite de elementos de accesibilidad por `screen_read` (1..2000) |

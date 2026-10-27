@@ -417,7 +417,7 @@ export function screenReadTool(services: ToolServices) {
         exec.signal,
       )
       const sanitized = observedWindow(tree.snapshot, config.maxTextLength)
-      const record = observations.record(tree.snapshot)
+      const record = observations.record(tree.snapshot, tree.elements)
       auditObservation(exec, {
         observationId: record.id,
         windowId: tree.snapshot.windowId,
@@ -713,7 +713,7 @@ export function clickTool(services: ToolServices) {
           windowId: parsed.basedOn.windowId,
           ...byElement ? { elementId: target.elementId as string } : { x: target.x as number, y: target.y as number },
           button: parsed.button ?? 'left',
-        }, focusFallback, exec.signal))
+        }, focusFallback, exec.signal), byElement ? target.elementId as string : undefined)
       return {
         ok: true,
         windowId: outcome.windowId,
@@ -763,7 +763,7 @@ export function typeTool(services: ToolServices) {
           elementId: parsed.elementId,
           text: parsed.text,
           rollback: config.rollbackEnabled,
-        }, focusFallback, exec.signal))
+        }, focusFallback, exec.signal), parsed.elementId)
       return {
         ok: true,
         windowId: outcome.windowId,
@@ -815,7 +815,7 @@ export function scrollTool(services: ToolServices) {
           ...parsed.elementId !== undefined ? { elementId: parsed.elementId } : {},
           direction: parsed.direction,
           amount,
-        }, focusFallback, exec.signal))
+        }, focusFallback, exec.signal), parsed.elementId)
       return {
         ok: true,
         windowId: outcome.windowId,

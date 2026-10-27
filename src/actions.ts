@@ -85,7 +85,7 @@ export class ActionExecutor {
    * @param signal - cancellation.
    * @returns the cited record and the fresh snapshot.
    */
-  private async requireFreshWindow(observationId: string, windowId: number, signal: AbortSignal): Promise<{ record: ObservationRecord; fresh: WindowSnapshot }> {
+  private async requireFreshWindow(observationId: string, windowId: number, signal: AbortSignal, targetRef?: string): Promise<{ record: ObservationRecord; fresh: WindowSnapshot }> {
     const record = this.deps.observations.get(observationId)
     if (record === undefined) {
       throw new DshClickError(
@@ -99,8 +99,16 @@ export class ActionExecutor {
         'UNKNOWN_OBSERVATION',
       )
     }
-    const fresh = await this.deps.backend.snapshot(windowId, signal)
-    const verdict = this.deps.observations.verify(record, fresh)
+    let fresh = await this.deps.backend.snapshot(windowId, signal)
+    let targetElements: readonly import('./platform/types.ts').ElementInfo[] | undefined
+    if (targetRef !== undefined && record.elementHashes !== undefined && this.config.staleCheckTree === 'target') {
+      const tree = await this.deps.backend.tree(
+        { windowId }, this.config.maxElements, this.config.maxTreeDepth, false, signal,
+      )
+      fresh = tree.snapshot
+      targetElements = tree.elements
+    }
+    const verdict = this.deps.observations.verify(record, fresh, Date.now(), targetRef === undefined ? undefined : { ref: targetRef, elements: targetElements ?? [] })
     if (!verdict.ok) {
       throw new DshClickError(
         `${verdict.detail} — run screen_read or screen_shot again before acting`,
@@ -193,12 +201,13 @@ export class ActionExecutor {
     observationId: string,
     windowId: number,
     run: (focusFallback: boolean) => Promise<ActionOutcome>,
+    targetRef?: string,
   ): Promise<ActionOutcome> {
     let approved: ApprovalKind = 'none'
     let observationIdAudited: string | undefined
     let windowIdAudited: number | undefined
     try {
-      const { record } = await this.requireFreshWindow(observationId, windowId, exec.signal)
+      const { record } = await this.requireFreshWindow(observationId, windowId, exec.signal, targetRef)
       observationIdAudited = observationId
       windowIdAudited = windowId
       approved = await this.gate(exec, toolName, {

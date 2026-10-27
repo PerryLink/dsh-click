@@ -10,7 +10,7 @@
 
 import { createHash } from 'node:crypto'
 import type { ResolvedConfig } from './config.ts'
-import type { Rect, WindowSnapshot } from './platform/types.ts'
+import type { ElementInfo, Rect, WindowSnapshot } from './platform/types.ts'
 
 /** One cached observation, immutable after construction. */
 export interface ObservationRecord {
@@ -24,6 +24,8 @@ export interface ObservationRecord {
   rect: Rect
   treeHash: string
   shotHash: string
+  /** Per-element hashes captured from a tree read (absent for screenshot-only observations). */
+  elementHashes?: Readonly<Record<string, string>>
   elementCount: number
   /** Wall-clock capture time in milliseconds. */
   observedAt: number
@@ -54,6 +56,19 @@ export function observationIdOf(snapshot: WindowSnapshot): string {
   return createHash('sha256').update(material).digest('hex').slice(0, 32)
 }
 
+/** Hash one captured element's identity-relevant fields. */
+export function elementHashOf(element: ElementInfo): string {
+  return createHash('sha256').update(JSON.stringify([
+    element.elementId,
+    element.controlType,
+    element.name,
+    element.automationId,
+    element.rect,
+    element.enabled,
+    element.patterns,
+  ])).digest('hex')
+}
+
 /** Bounded LRU cache of observations, plus the staleness verdict logic. */
 export class ObservationStore {
   private readonly entries = new Map<string, ObservationRecord>()
@@ -67,7 +82,7 @@ export class ObservationStore {
    * @param snapshot - the snapshot facts it came from.
    * @returns the stored record (id = hash of the state).
    */
-  record(snapshot: WindowSnapshot): ObservationRecord {
+  record(snapshot: WindowSnapshot, elements?: readonly ElementInfo[]): ObservationRecord {
     const record: ObservationRecord = {
       id: observationIdOf(snapshot),
       windowId: snapshot.windowId,
@@ -78,6 +93,9 @@ export class ObservationStore {
       rect: { ...snapshot.rect },
       treeHash: snapshot.treeHash,
       shotHash: snapshot.shotHash,
+      ...(elements === undefined ? {} : {
+        elementHashes: Object.fromEntries(elements.map(element => [element.elementId, elementHashOf(element)])),
+      }),
       elementCount: snapshot.elementCount,
       observedAt: Date.now(),
     }
@@ -113,7 +131,12 @@ export class ObservationStore {
    * @param now - wall-clock now (injectable for tests).
    * @returns the verdict.
    */
-  verify(record: ObservationRecord, fresh: WindowSnapshot, now: number = Date.now()): FreshnessVerdict {
+  verify(
+    record: ObservationRecord,
+    fresh: WindowSnapshot,
+    now: number = Date.now(),
+    target?: { readonly ref: string; readonly elements: readonly ElementInfo[] },
+  ): FreshnessVerdict {
     if (now - record.observedAt > this.config.maxObservationAgeMs) {
       return {
         ok: false,
@@ -135,14 +158,28 @@ export class ObservationStore {
         detail: `window ${record.windowId} no longer matches observation ${record.id} (title/class/process or rect changed)`,
       }
     }
+    let scopedTargetUnchanged = false
     if (this.config.staleCheckTree !== 'off' && fresh.treeHash !== record.treeHash) {
-      return {
-        ok: false,
-        code: 'STALE_TREE',
-        detail: `the accessibility tree of window ${record.windowId} changed since observation ${record.id}`,
+      const expected = target === undefined || record.elementHashes === undefined
+        ? undefined
+        : record.elementHashes[target.ref]
+      const current = target?.elements.find(element => element.elementId === target.ref)
+      if (this.config.staleCheckTree === 'target' && expected !== undefined && current !== undefined
+        && elementHashOf(current) === expected) {
+        // The whole window moved (a clock/cursor/memory label), but the element
+        // this action addresses is byte-for-byte the same: allow it.
+        scopedTargetUnchanged = true
+      } else {
+        return {
+          ok: false,
+          code: 'STALE_TREE',
+          detail: target === undefined
+            ? `the accessibility tree of window ${record.windowId} changed since observation ${record.id}`
+            : `target element ${target.ref} changed or disappeared since observation ${record.id}`,
+        }
       }
     }
-    if (this.config.staleCheckPixels && fresh.shotHash !== record.shotHash) {
+    if (!scopedTargetUnchanged && this.config.staleCheckPixels && fresh.shotHash !== record.shotHash) {
       return {
         ok: false,
         code: 'STALE_PIXELS',

@@ -9,7 +9,7 @@
 import { describe, expect, it } from 'vitest'
 import { resolveConfig } from '../src/config.ts'
 import { ObservationStore, observationIdOf } from '../src/observe.ts'
-import type { WindowSnapshot } from '../src/platform/types.ts'
+import type { ElementInfo, WindowSnapshot } from '../src/platform/types.ts'
 import { makeSnapshot } from './harness.ts'
 
 function snapshot(overrides: Partial<WindowSnapshot> = {}): WindowSnapshot {
@@ -69,6 +69,29 @@ describe('ObservationStore', () => {
     const record = relaxed.record(snapshot())
     expect(relaxed.verify(record, snapshot({ treeHash: 'tree-hash-2' }))).toEqual({ ok: true })
     expect(relaxed.verify(record, snapshot({ title: 'Changed', treeHash: 'tree-hash-2' }))).toMatchObject({ ok: false, code: 'STALE_IDENTITY' })
+  })
+
+  it('allows an unchanged target when an unrelated leaf moved the whole-tree hash (target mode)', () => {
+    const element: ElementInfo = {
+      elementId: 'e1', controlType: 'Button', name: 'Send', automationId: '', rect: { x: 1, y: 2, width: 3, height: 4 }, enabled: true, patterns: ['invoke'],
+    }
+    const store = new ObservationStore(resolveConfig({ staleCheckTree: 'target' }))
+    const record = store.record(snapshot(), [element])
+    const verdict = store.verify(record, snapshot({ treeHash: 'tree-hash-2', shotHash: 'shot-hash-2' }), Date.now(), { ref: 'e1', elements: [element] })
+    expect(verdict).toEqual({ ok: true })
+  })
+
+  it('refuses a changed target and falls back to strict without element hashes', () => {
+    const element: ElementInfo = {
+      elementId: 'e1', controlType: 'Button', name: 'Send', automationId: '', rect: { x: 1, y: 2, width: 3, height: 4 }, enabled: true, patterns: ['invoke'],
+    }
+    const store = new ObservationStore(resolveConfig({ staleCheckTree: 'target' }))
+    const record = store.record(snapshot(), [element])
+    expect(store.verify(record, snapshot({ treeHash: 'tree-hash-2' }), Date.now(), { ref: 'e1', elements: [{ ...element, name: 'Changed' }] })).toMatchObject({ ok: false, code: 'STALE_TREE' })
+
+    const strict = new ObservationStore(resolveConfig({}))
+    const screenshotOnly = strict.record(snapshot())
+    expect(strict.verify(screenshotOnly, snapshot({ treeHash: 'tree-hash-2' }), Date.now(), { ref: 'e1', elements: [element] })).toMatchObject({ ok: false, code: 'STALE_TREE' })
   })
 
   it('refuses pixel drift, and tolerates it when staleCheckPixels is off', () => {

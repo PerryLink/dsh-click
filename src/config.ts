@@ -109,13 +109,13 @@ export interface Config {
   /** Compare a fresh pixel hash before every action (default true; the stale-state boundary). */
   staleCheckPixels?: boolean
   /**
-   * Whole-window accessibility-tree staleness policy. `strict` refuses an action when any
-   * node in the window changed; `off` skips the whole-tree hash while keeping identity,
-   * observation-age, and (unless disabled) pixel checks. `off` is the escape hatch for
-   * windows with a ticking clock/cursor; per-element scoped verification is the planned
-   * default replacement.
+   * Accessibility-tree staleness policy. `strict` refuses an action when any node in the
+   * window changed; `target` (default) lets `click`/`type`/`scroll` proceed when the
+   * addressed element itself is unchanged, even if an unrelated clock/cursor moved the
+   * whole-tree hash; `off` skips the tree hash entirely. Identity, observation-age, and
+   * (unless disabled) pixel checks still apply.
    */
-  staleCheckTree?: 'strict' | 'off'
+  staleCheckTree?: 'strict' | 'target' | 'off'
   /** Maximum age in ms of an observation that an action may still base on (default 30000). */
   maxObservationAgeMs?: number
   /** Cap on cached observations (default 8). */
@@ -153,7 +153,7 @@ export interface ResolvedConfig {
   /** Whether the pixel-level stale check runs. */
   staleCheckPixels: boolean
   /** Whole-window tree-staleness policy. */
-  staleCheckTree: 'strict' | 'off'
+  staleCheckTree: 'strict' | 'target' | 'off'
   /** Maximum observation age in milliseconds. */
   maxObservationAgeMs: number
   /** Cap on cached observations. */
@@ -181,7 +181,7 @@ export const Config: z<Config> = z.object({
   maxHelperOutputBytes: z.number().min(1_024).max(MAX_HELPER_OUTPUT_BYTES).default(DEFAULT_MAX_HELPER_OUTPUT_BYTES),
   maxScreenshotSide: z.number().min(MIN_SCREENSHOT_SIDE).max(MAX_SCREENSHOT_SIDE).default(DEFAULT_MAX_SCREENSHOT_SIDE),
   staleCheckPixels: z.boolean().default(true),
-  staleCheckTree: z.union(['strict', 'off'] as const).default('strict'),
+  staleCheckTree: z.union(['strict', 'target', 'off'] as const).default('target'),
   maxObservationAgeMs: z.number().min(MIN_OBSERVATION_AGE_MS).max(MAX_OBSERVATION_AGE_MS).default(DEFAULT_MAX_OBSERVATION_AGE_MS),
   maxCachedObservations: z.number().min(1).max(MAX_CACHED_OBSERVATIONS).default(DEFAULT_MAX_CACHED_OBSERVATIONS),
   maxElements: z.number().min(1).max(MAX_ELEMENTS).default(DEFAULT_MAX_ELEMENTS),
@@ -247,8 +247,8 @@ export function resolveConfig(config: Config | undefined): ResolvedConfig {
   const staleCheckPixels = config?.staleCheckPixels ?? true
   if (typeof staleCheckPixels !== 'boolean') invalid('staleCheckPixels', 'must be a boolean')
 
-  const staleCheckTree = config?.staleCheckTree ?? 'strict'
-  if (staleCheckTree !== 'strict' && staleCheckTree !== 'off') invalid('staleCheckTree', 'must be "strict" or "off"')
+  const staleCheckTree = config?.staleCheckTree ?? 'target'
+  if (staleCheckTree !== 'strict' && staleCheckTree !== 'target' && staleCheckTree !== 'off') invalid('staleCheckTree', 'must be "strict", "target", or "off"')
 
   const maxObservationAgeMs = config?.maxObservationAgeMs ?? DEFAULT_MAX_OBSERVATION_AGE_MS
   if (!Number.isFinite(maxObservationAgeMs) || maxObservationAgeMs < MIN_OBSERVATION_AGE_MS || maxObservationAgeMs > MAX_OBSERVATION_AGE_MS) {

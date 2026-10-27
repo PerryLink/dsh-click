@@ -183,7 +183,7 @@ All tunables are Schemastery `Config` fields (changeable from cordis.yml). An id
 | `maxHelperOutputBytes` | `25165824` | Cap on one helper response in bytes (1024..67108864) |
 | `maxScreenshotSide` | `2560` | Longest screenshot side in pixels (320..7680); larger captures are downscaled |
 | `staleCheckPixels` | `true` | Compare a fresh pixel hash before every action and refuse on change |
-| `staleCheckTree` | `strict` | Whole-window tree freshness: `strict` refuses any changed node; `off` skips the tree hash (escape hatch for clocks/cursors; identity/age/pixel checks still apply) |
+| `staleCheckTree` | `target` | Accessibility-tree freshness: `target` verifies the addressed element (default), `strict` refuses any changed node, `off` skips the tree hash (identity/age/pixel checks still apply) |
 | `maxObservationAgeMs` | `30000` | Maximum age in ms of an observation an action may cite (1000..600000) |
 | `maxCachedObservations` | `8` | LRU cap on cached observations (1..64) |
 | `maxElements` | `500` | Cap on accessibility elements per `screen_read` (1..2000) |

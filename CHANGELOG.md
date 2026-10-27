@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.26] - 2026-10-27
+
+### Fixed
+
+- **Element-targeted actions now verify the target instead of the whole window (issue #29).** `screen_read` stores a per-element hash; `click`/`type`/`scroll` re-read the tree and allow the action when the addressed element is unchanged, even if an unrelated clock, cursor, spinner, or memory label moved the whole-tree hash. `staleCheckTree` gains `target` and becomes the default; `strict` preserves the old whole-window refusal, and `off` remains the explicit escape hatch. Screenshot-only observations and `key` fall back to the strict whole-tree check. Added unchanged-target and changed-target regression tests.
+
 ## [0.3.25] - 2026-10-26
 
 ### Added
