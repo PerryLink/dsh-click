@@ -42,7 +42,12 @@
     "manifestVersion": 1,
     "bundle": {
       "patch": "./cordis.patch.yml"
-    }
+    },
+    "capabilities": [
+      "subprocess",
+      "tools:register"
+    ],
+    "labels": []
   },
   "dshWorkshop": {
     "schema": "omdsh-workshop-package/v1",
