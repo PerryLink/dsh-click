@@ -18,13 +18,19 @@ let callCounter = 0
 /** Dispatch one real tool call through the mounted harness. */
 async function callTool(harness: Harness, name: string, args: unknown): Promise<ToolExecutionResult> {
   callCounter += 1
-  return harness.ctx.tools.execute({
-    callId: CallId(`actions-spec-${callCounter}`),
-    name,
-    arguments: args,
+  // 0.2.2: execute() settles a whole batch; this helper dispatches one call and
+  // projects its result, so every assertion below keeps the flat result shape.
+  const batch = await harness.ctx.tools.execute({
+    calls: [{
+      type: 'tool-call',
+      id: CallId(`actions-spec-${callCounter}`),
+      name,
+      arguments: JSON.stringify(args),
+    }],
     agent: harness.agent,
     signal: new AbortController().signal,
   })
+  return batch.results[0]!.result
 }
 
 /** Seed one observation by running screen_read against the scripted tree. */

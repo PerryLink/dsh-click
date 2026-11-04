@@ -18,13 +18,19 @@ let callCounter = 0
 
 async function callTool(harness: Harness, name: string, args: unknown): Promise<ToolExecutionResult> {
   callCounter += 1
-  return harness.ctx.tools.execute({
-    callId: CallId(`tools-spec-${callCounter}`),
-    name,
-    arguments: args,
+  // 0.2.2: execute() settles a whole batch; this helper dispatches one call and
+  // projects its result, so every assertion below keeps the flat result shape.
+  const batch = await harness.ctx.tools.execute({
+    calls: [{
+      type: 'tool-call',
+      id: CallId(`tools-spec-${callCounter}`),
+      name,
+      arguments: JSON.stringify(args),
+    }],
     agent: harness.agent,
     signal: new AbortController().signal,
   })
+  return batch.results[0]!.result
 }
 
 function treeFixture(): Tree {

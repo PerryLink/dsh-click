@@ -14,6 +14,7 @@ import { Context, type Fiber } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import { AttachmentStore, AttachmentId, type ImageAttachmentRef, type SaveImageAttachment } from '@deepseek-ai/dsh-attachment'
 import SessionStore, { SessionId, type Session } from '@deepseek-ai/dsh-session'
+import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import {
   SubprocessRuntime,
   type SubprocessCollectedOutputs,
@@ -23,6 +24,7 @@ import {
   type SubprocessSpawnSpec,
 } from '@deepseek-ai/dsh-subprocess'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
+import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import ApprovalService from '@deepseek-ai/dsh-user-approval'
 import {
   DshClickError,
@@ -305,10 +307,28 @@ export interface Harness {
 export async function mountHarness(options: HarnessOptions = {}): Promise<Harness> {
   const ctx = new Context()
   await ctx.plugin(SessionStore)
+  // 0.2.2: `ApprovalService` statically injects `sessionProjections`, so the
+  // registry must exist before it mounts or the approval service never applies.
+  // Direct construction binds the registry's own `session/event` listener to
+  // THIS context; `ctx.plugin()` would mount it on a child scope whose listener
+  // never sees root-emitted session events (production resolves the service at
+  // composition level).
+  new SessionProjectionRegistry(ctx)
   const session = ctx.sessions.create(SessionId('dsh-click-harness'))
   session.append('turn/start', { turn: 1 })
-  ctx.provide('systemPrompt', { tools: () => () => undefined, section: () => () => undefined } as never)
+  // Minimal prompt registry: `ToolRuntime` injects it, and 0.2.2's
+  // `ApprovalService` also registers one runtime-context section (so the stub
+  // carries `context` / `getContextOrder`, not just `tools` / `section`).
+  ctx.provide('systemPrompt', {
+    tools: () => () => undefined,
+    section: () => () => undefined,
+    context: () => () => undefined,
+    getContextOrder: () => 0,
+  } as never)
   await ctx.plugin(ToolRuntime)
+  // 0.2.2: `ctx.tools.execute()` takes a whole batch and raw execution lives
+  // behind a pluggable executor; the native one keeps the tool bodies dispatchable.
+  await ctx.plugin(NativeToolExecutor)
   const backend = options.backend ?? new FakeDesktopBackend()
 
   if (options.approval !== 'absent') {

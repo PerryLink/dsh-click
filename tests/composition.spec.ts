@@ -30,6 +30,9 @@ function configFor(pluginRow: string, configLines: string[] = []): string {
     "- name: '@deepseek-ai/dsh-session'",
     "- name: '@deepseek-ai/dsh-system-prompt'",
     "- name: '@deepseek-ai/dsh-tools'",
+    // 0.2.2: batch execution lives behind a pluggable executor, so the composed
+    // profile must carry the executor row or every dispatch would find no provider.
+    "- name: '@deepseek-ai/dsh-tool-executor-native'",
     // `subprocess` is a hard inject of the plugin (the Windows helper spawns
     // through it), so the composed profile must carry the provider row.
     "- name: '@deepseek-ai/dsh-subprocess-local'",
@@ -84,6 +87,10 @@ describe('Loader composition (built entry)', () => {
     expect(summary.observationId).toMatch(/^[0-9a-f]{32}$/u)
   })
 
+  // Three sequential child processes, each importing the full 0.2.2 host graph
+  // (tool executor + session projections included); on a drvfs/Windows mount a
+  // single cold boot can take several seconds, so the 5 s default is below the
+  // runner's own 120 s spawn budget.
   it('rejects invalid config through the Loader for the expected reason', () => {
     const entryUrl = pathToFileURL(builtEntry).href
     const cases = [
@@ -98,7 +105,7 @@ describe('Loader composition (built entry)', () => {
       expect(evidence.status, `invalid config unexpectedly mounted:\n${entry.lines.join('\n')}`).not.toBe(0)
       expect(evidence.stderr, `failed for the wrong reason:\n${evidence.stderr}`).toMatch(entry.reason)
     }
-  })
+  }, 30_000)
 
   it('rejects a default export through the Loader with the missing-inject reason', () => {
     const wrapper = join(temporaryRoot, 'default-export.mjs')

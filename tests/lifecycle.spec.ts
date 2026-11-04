@@ -10,9 +10,10 @@
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import { CallId } from './call-id.ts'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
+import type { ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import { describe, expect, it } from 'vitest'
 import * as plugin from '../src/index.ts'
-import { FakeDesktopBackend, makeOutcome, makeSnapshot, mountHarness } from './harness.ts'
+import { FakeDesktopBackend, makeOutcome, makeSnapshot, mountHarness, type Harness } from './harness.ts'
 import type { Tree } from '../src/platform/types.ts'
 
 const TOOL_NAMES = ['screen_shot', 'screen_read', 'click', 'type', 'scroll', 'key', 'app_list', 'app_launch']
@@ -31,6 +32,16 @@ function treeFixture(): Tree {
     }],
     pixels: [{ label: 'Save', x: 100, y: 72, color: 'rgb(1, 2, 3)' }],
   }
+}
+
+/** Dispatch one real call through the 0.2.2 batch executor and project its result. */
+async function callTool(harness: Harness, id: string, name: string, args: unknown): Promise<ToolExecutionResult> {
+  const batch = await harness.ctx.tools.execute({
+    calls: [{ type: 'tool-call', id: CallId(id), name, arguments: JSON.stringify(args) }],
+    agent: harness.agent,
+    signal: new AbortController().signal,
+  })
+  return batch.results[0]!.result
 }
 
 // ---------------------------------------------------------------------------
@@ -93,13 +104,7 @@ describe('tool three interfaces', () => {
         }),
       }))
 
-      const result = await harness.ctx.tools.execute({
-        callId: CallId('dsh-click-three-interfaces'),
-        name: 'screen_read',
-        arguments: {},
-        agent: harness.agent,
-        signal: new AbortController().signal,
-      })
+      const result = await callTool(harness, 'dsh-click-three-interfaces', 'screen_read', {})
       expect(result.isError).toBe(false)
       if (result.isError) return
 
@@ -153,13 +158,7 @@ describe('tool three interfaces', () => {
         }),
       }))
 
-      const result = await harness.ctx.tools.execute({
-        callId: CallId('dsh-click-screen-shot-three-interfaces'),
-        name: 'screen_shot',
-        arguments: {},
-        agent: harness.agent,
-        signal: new AbortController().signal,
-      })
+      const result = await callTool(harness, 'dsh-click-screen-shot-three-interfaces', 'screen_shot', {})
       expect(result.isError).toBe(false)
       if (result.isError) return
 
@@ -188,13 +187,7 @@ describe('tool three interfaces', () => {
       backend.treeResult = treeFixture()
       backend.clickResult = makeOutcome()
 
-      const observed = await harness.ctx.tools.execute({
-        callId: CallId('dsh-click-seed-observation'),
-        name: 'screen_read',
-        arguments: {},
-        agent: harness.agent,
-        signal: new AbortController().signal,
-      })
+      const observed = await callTool(harness, 'dsh-click-seed-observation', 'screen_read', {})
       expect(observed.isError).toBe(false)
       if (observed.isError) return
       const observationId = (observed.value as { observationId: string }).observationId
@@ -211,15 +204,9 @@ describe('tool three interfaces', () => {
         }),
       }))
 
-      const result = await harness.ctx.tools.execute({
-        callId: CallId('dsh-click-click-three-interfaces'),
-        name: 'click',
-        arguments: {
-          basedOn: { observationId, windowId: makeSnapshot().windowId },
-          target: { elementId: '42.100' },
-        },
-        agent: harness.agent,
-        signal: new AbortController().signal,
+      const result = await callTool(harness, 'dsh-click-click-three-interfaces', 'click', {
+        basedOn: { observationId, windowId: makeSnapshot().windowId },
+        target: { elementId: '42.100' },
       })
       expect(result.isError).toBe(false)
       if (result.isError) return

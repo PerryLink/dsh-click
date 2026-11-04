@@ -1,16 +1,18 @@
 # Changelog
 
-## [0.3.26] - 2026-10-27
+## [Unreleased]
+
+### Changed
+
+- **Host 0.2.2 line support.** devDependencies move from `0.2.1-rc.2` to `0.2.2-rc.1`, `@deepseek-ai/cordis` to `^4.1.0`, the include/loader plugins to `^1.1.0`, and schemastery to `~3.19.0` so one copy resolves against `@deepseek-ai/dsh-llm` 0.2.2. Add `@deepseek-ai/dsh-tool-executor-native` and `@deepseek-ai/dsh-session-projection` (both 0.2.2-rc.1) plus `@deepseek-ai/dsh-package-manifest`, which dsh-llm 0.2.2 types import without declaring. `engines.dsh` appends `>=0.2.2-0 <0.3.0` (append-only) and `engines.node` becomes `^22.19.0 || >=24.9.0`.
 
 ### Fixed
 
-- **Element-targeted actions now verify the target instead of the whole window (issue #29).** `screen_read` stores a per-element hash; `click`/`type`/`scroll` re-read the tree and allow the action when the addressed element is unchanged, even if an unrelated clock, cursor, spinner, or memory label moved the whole-tree hash. `staleCheckTree` gains `target` and becomes the default; `strict` preserves the old whole-window refusal, and `off` remains the explicit escape hatch. Screenshot-only observations and `key` fall back to the strict whole-tree check. Added unchanged-target and changed-target regression tests.
-
-## [0.3.25] - 2026-10-26
-
-### Added
-
-- **`staleCheckTree: "strict" | "off"` (default `strict`) — an explicit escape hatch for windows with a ticking clock, cursor, spinner, or live memory label (issue #29).** `strict` preserves the existing whole-window tree-hash refusal; `off` skips only the tree hash, while identity, observation age, and (unless `staleCheckPixels: false`) pixel checks still apply. This makes dynamic windows operable today; per-element scoped verification remains the planned default replacement.
+- **Batch tool dispatch in the suites and the Loader runner.** 0.2.2 replaced the single-call `tools.execute({ callId, name, arguments })` with `ToolBatchInput` → `ToolBatchResult`; every call site now builds a one-call batch (`calls: [{ type: 'tool-call', id, name, arguments: JSON.stringify(...) }]`) and projects `results[0].result`, so the assertions keep their flat result shape.
+- **Raw execution is behind a pluggable executor.** The test harness mounts `@deepseek-ai/dsh-tool-executor-native` right after `ToolRuntime`, and the Loader composition profile carries its row; without them `ctx.tools.execute()` has no provider.
+- **Loader failures surface again.** `cordis` 4.1.0 settles a failed row's error on that row's fiber instead of rejecting `loader.await()`, so `scripts/loader-runner.mjs` now awaits every row fiber after `loader.await()`; the invalid-config and default-export negations fail on the real reason instead of a downstream missing-tool symptom. The row-state scan remains as a fallback.
+- **Approval service mounting in the harness.** `ApprovalService` 0.2.2 statically injects `sessionProjections`, so the harness constructs `SessionProjectionRegistry` on the root context before mounting it, and the `systemPrompt` stub gains `context` / `getContextOrder` because the service registers an approval-policy context section.
+- **Invalid-config composition case timeout.** Its three sequential child boots now import the full 0.2.2 host graph and can exceed the 5 s vitest default on a drvfs/Windows mount; the case gets an explicit 30 s budget inside the runner's own 120 s spawn timeout.
 
 ## [0.3.24] - 2026-10-19
 

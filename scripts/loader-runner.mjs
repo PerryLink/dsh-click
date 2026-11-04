@@ -100,6 +100,12 @@ try {
     config: { path: pathToFileURL(configPath).href },
   })
   await ctx.loader.await()
+  // cordis 4.1.0 no longer rejects `loader.await()` when a row fails to apply:
+  // the error settles on that row's fiber. Await every row fiber so an invalid
+  // config or a missing inject still fails loud here on the real reason instead
+  // of surfacing as a missing registry entry. (0.2.2 upgrade fix; measured
+  // against loader 1.1.0.)
+  for (const entry of ctx.loader.entries()) await entry.fiber
   rethrowFirstFailedRow()
 
   // Authoritative registry: all eight tools are registered.
@@ -112,7 +118,8 @@ try {
   }
 
   // Real behavior through the real tools registry: screen_shot forwards the
-  // config-clamped `maxSide` to the backend.
+  // config-clamped `maxSide` to the backend. 0.2.2 dispatches a whole batch and
+  // settles one correlated result per call.
   const session = ctx.sessions.create(SessionId('dsh-click-loader-runner'))
   const agent = /** @type {any} */ ({
     id: session.id,
@@ -129,13 +136,15 @@ try {
     steer: () => undefined,
     inject: () => undefined,
   })
-  const result = await ctx.tools.execute({
-    callId: CallId('dsh-click-loader-runner'),
-    name: 'screen_shot',
-    arguments: { maxSide: 9999 },
+  const batch = await ctx.tools.execute({
+    calls: [{ type: 'tool-call', id: CallId('dsh-click-loader-runner'), name: 'screen_shot', arguments: JSON.stringify({ maxSide: 9999 }) }],
     agent,
     signal: new AbortController().signal,
   })
+  const result = batch.results[0]?.result
+  if (result === undefined) {
+    throw new Error('Loader composition: screen_shot produced no result')
+  }
   if (result.isError) {
     throw new Error(`Loader composition: screen_shot errored: ${result.error?.message ?? String(result.error)}`)
   }
@@ -154,20 +163,18 @@ try {
 }
 
 /**
- * Re-throw the first FAILED loader row's error.
+ * Re-throw the first FAILED loader row's error — fallback for the fiber await.
  *
  * `cordis-plugin-loader` 1.0.6 dropped the failure surface `await()` had in
  * 1.0.4: the old body collected `entry._await()` outcomes and threw the single
  * failure (or an AggregateError), while 1.0.6's body only loops over
  * `_initTask || fiber.inertia` and returns as soon as there is no pending
  * task — so a row whose config validation or `apply` threw no longer makes
- * `await()` reject. `Entry._init()` does not surface it either (cordis's
- * `Fiber._reload()` catches the error, reports it through `ctx.logger.error`
- * and parks the fiber in `FiberState.FAILED`), and this composition registers
- * no exporter, so the report would vanish and the negative regressions here
- * would pass on the downstream symptom ("tool is missing from the tools
- * registry") instead of the real reason. Walking the entries restores that
- * reason without depending on the resurrected API.
+ * `await()` reject. cordis 4.1.0 keeps that behavior but parks the reason on
+ * the row's fiber (`Fiber._error`, re-thrown by `fiber.await()`), which is why
+ * the caller awaits every row fiber first. This state scan stays as a fallback
+ * for a row whose error does not surface through `fiber.await()`; the reason is
+ * then recovered from the row's own error records.
  *
  * `DSH_LOADER_RUNNER_NO_RETHROW=1` disables it for re-measurement only.
  */
