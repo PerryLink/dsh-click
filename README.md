@@ -1,198 +1,212 @@
 <div align="center">
 
-# 🖱️ dsh-click
-- **1024 store channel**: `npm i -g dsh1024` once, then `dsh1024 plugin --profile web add dsh-click` (counts toward the [deepseek1024.com](https://deepseek1024.com) install ranking).
-[![Gitee](https://img.shields.io/badge/Gitee-mirror-c71d23?logo=gitee)](https://gitee.com/perrylink/dsh-click)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-flow-dark.svg">
+  <img src="docs/assets/dsh-click-flow-light.svg" width="100%" alt="dsh-click 的观察→行动闭环：screen_read / screen_shot 产出 observationId，click / type / scroll / key 以 basedOn 引用它，动作前过像素哈希与 maxObservationAgeMs 新鲜度校验、再经 ctx.approval 审批，动作前后校验 pid / exe 进程身份，全部事实写入 dsh-click/observed 与 dsh-click/action 审计事件">
+</picture>
+
+# dsh-click
+
+**让模型看见屏幕、动手操作——每个变更动作都过审批，每次观察与操作都留审计。**
+
+面向 DeepSeek Harness 的原生桌面控制插件（Windows 优先）：无障碍树与像素提示让纯文本模型也能“看”，窗口级点击与输入让模型“动”，审批、新鲜度与进程身份校验守在中间。
+
+[安装](#三步上手) · [配置](#配置) · [FAQ](#faq) · [简体中文](README.md) · [English](README.en.md) · [Español](README.es.md) · [Português](README.pt.md) · [हिन्दी](README.hi.md)
+
+[![License](https://img.shields.io/badge/license-Apache--2.0-3366CC?style=flat-square&labelColor=2B3245)](LICENSE)
+[![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.2.1%20%3C0.3.0-4B67B4?style=flat-square&labelColor=2B3245)](#兼容性)
+[![npm](https://img.shields.io/npm/v/dsh-click?style=flat-square&labelColor=2B3245&color=CB3837)](https://www.npmjs.com/package/dsh-click)
+[![CI](https://img.shields.io/github/actions/workflow/status/PerryLink/dsh-click/ci.yml?branch=main&label=CI&style=flat-square&labelColor=2B3245)](https://github.com/PerryLink/dsh-click/actions/workflows/ci.yml)
+[![Node](https://img.shields.io/badge/node-%5E22.19%20%7C%7C%20%3E%3D24.9-339933?style=flat-square&labelColor=2B3245)](#兼容性)
+
+[![Stars](https://img.shields.io/github/stars/PerryLink/dsh-click?style=flat-square&labelColor=2B3245)](https://github.com/PerryLink/dsh-click/stargazers)
+[![npm downloads](https://img.shields.io/npm/dm/dsh-click?style=flat-square&labelColor=2B3245&color=CB3837)](https://www.npmjs.com/package/dsh-click)
 [![dshfind](https://dshfind.com/api/badge/PerryLink/dsh-click?metric=downloads)](https://dshfind.com/plugins/PerryLink/dsh-click?ref=badge)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/PerryLink/dsh-click/badge)](https://api.securityscorecards.dev/projects/github.com/PerryLink/dsh-click)
-
-**Cross-platform native desktop control for DeepSeek Harness — Windows first.**
-
-*Look at the screen, then act — every click gated, every action audited.*
-
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![DSH plugin](https://img.shields.io/badge/dsh--plugin-✅-green)](https://github.com/topics/dsh-plugin)
-[![dsh-doctor](https://raw.githubusercontent.com/PerryLink/dsh-plugin-doctor/main/badges/PerryLink__dsh-click.svg)](https://github.com/PerryLink/dsh-plugin-doctor#verified-徽章)
-[![DSH Market](https://raw.githubusercontent.com/2BingLing/dsh-market/master/assets/readme/badge-listed-en.svg)](https://dsh.market/)
-[![Node](https://img.shields.io/badge/node-%5E22.19%20%7C%7C%20%3E%3D24-brightgreen.svg)](#)
-[![CI](https://img.shields.io/github/actions/workflow/status/PerryLink/dsh-click/ci.yml?branch=main&label=CI)](https://github.com/PerryLink/dsh-click/actions)
-[![Version](https://img.shields.io/github/v/tag/PerryLink/dsh-click?label=version)](https://github.com/PerryLink/dsh-click/releases)
-[![npm version](https://img.shields.io/npm/v/dsh-click)](https://www.npmjs.com/package/dsh-click)
-[![npm downloads](https://img.shields.io/npm/dm/dsh-click)](https://www.npmjs.com/package/dsh-click)
-
-[English](README.md) · [简体中文](README-zh.md) · [Español](README-es.md) · [Português](README-pt.md) · [हिन्दी](README-hi.md)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/PerryLink/dsh-click/badge)](https://securityscorecards.dev/viewer/?uri=github.com/PerryLink/dsh-click)
+[![DSH Market](https://img.shields.io/badge/DSH_Market-listed-4B67B4?style=flat-square&labelColor=2B3245)](https://dsh.market/)
+[![Gitee](https://img.shields.io/badge/Gitee-mirror-C71D23?style=flat-square&labelColor=2B3245&logo=gitee)](https://gitee.com/perrylink/dsh-click)
 
 ```sh
 dsh plugin --profile <name> add dsh-click
 ```
 
-
 </div>
 
----
+<sub>社区插件，与 DeepSeek 官方无关。唯一仓库：<https://github.com/PerryLink/dsh-click>（Gitee 为镜像）。</sub>
 
-**📖 Ecosystem knowledge base** — measured data, not marketing: [plugin development guide · plugin-selection data · maintenance criteria](https://perrylink.github.io/dsh-plugin-guide/).
+## 它是什么
 
-<!-- star-cta -->
-## Install & uninstall
+`dsh-click` 给模型一条完整的「观察 → 行动」通道：先用 `screen_read` 读窗口的无障碍树（元素 id、类型、名称、矩形、支持的模式）与像素位置提示，或用 `screen_shot` 截一张图；再用 `click` / `type` / `scroll` / `key` 按元素 id 或坐标操作同一个窗口。每个变更性动作都必须引用一次新鲜观察（`basedOn`）——屏幕变了或观察过期就拒绝，并给出模型可读的理由；默认还要过 `ctx.approval` 审批，动作前后各校验一次目标进程身份。它默认不抢前台焦点（`focusFallback: never`），所有观察与操作都落成脱敏的 `dsh-click/observed` / `dsh-click/action` 审计事件。
 
-- **git channel** (latest `main`): `dsh plugin --profile web add github:PerryLink/dsh-click` — the `prepare` script builds with production dependencies only.
-- **npm channel** (published releases): `dsh plugin --profile web add dsh-click`.
-- **tarball channel**: `pnpm pack` in this repo, then `dsh plugin --profile web add ./dsh-click-<version>.tgz`.
-- **uninstall**: `dsh plugin --profile web remove dsh-click` (or remove the row from the profile patch).
+## 三步上手
 
-> If pnpm reports `ERR_PNPM_IGNORED_BUILDS` for this package (esbuild's harmless platform-binary validation), add `allowBuilds: { esbuild: true }` to your `pnpm-workspace.yaml` — the `dsh` CLI prints the exact snippet.
+1. **安装**（三选一）：
 
-## ⭐ 如果它帮到了你
+   ```sh
+   # git 渠道（最新 main；等价于 git+https://github.com/PerryLink/dsh-click.git）
+   dsh plugin --profile web add github:PerryLink/dsh-click
+   # npm 渠道（已发布版本）
+   dsh plugin --profile web add dsh-click
+   # tarball 渠道：本仓库 pnpm pack 后
+   dsh plugin --profile web add ./dsh-click-<version>.tgz
+   ```
 
-这个插件是 [DSH 插件家族](https://github.com/PerryLink)的一员（95 个，全部 Apache-2.0）。如果你在用，**给个 star** —— 它不会解锁任何功能，但会让下一个人在搜索里更容易找到它。
+   git 渠道的 `prepare` 脚本只用生产依赖构建。
 
-*English:* part of a 95 plugin family for DeepSeek Harness. If it is useful, **a star helps the next person find it** — nothing is gated behind it.
+2. **最小配置**（默认即可用；只对特定窗口免审批时再动 `autoApproveWindows`）：
 
+   ```yaml
+   - insert:
+       - id: dsh-click
+         name: dsh-click
+         config:
+           requireApproval: true
+           autoApproveWindows: ['^Notepad']
+           focusFallback: never
+   ```
 
-## What is dsh-click?
+3. **验证已生效**（重启后）：
 
-Cross-platform native desktop control for DeepSeek Harness — Windows first.
+   ```sh
+   dsh --profile web --dump-config | grep -A3 'id: dsh-click'
+   ```
 
-Look at the screen, then act — every click gated, every action audited.
+   然后让 agent 观察窗口并操作——每次变更性操作都会弹出审批：
 
-![Workflow diagram for dsh-click: install → open panel → act.](docs/assets/dsh-click-flow.svg)
+   ```text
+   > 打开记事本，输入 "hello"，再读回屏幕上的内容。
+   ```
 
-*Workflow overview: install → open panel → act. The examples below use the real command surface.*
+**卸载**：`dsh plugin --profile web remove dsh-click`（或从 profile patch 删掉该行）。
 
+> 如果 pnpm 对本包报 `ERR_PNPM_IGNORED_BUILDS`（esbuild 的平台二进制无害校验），在你的 `pnpm-workspace.yaml` 中加入 `allowBuilds: { esbuild: true }` —— `dsh` CLI 会打印确切片段。
 
+<details>
+<summary>从 DSH Desktop 市场安装</summary>
 
-## Compatibility
+所有 PerryLink 插件均可在 DSH Desktop 内置市场中浏览：**市场 → 来源 → 添加来源 → 粘贴** `https://perrylink-dsh-catalog.perrylink.workers.dev/catalog-source.json` **→ 选中**。安装仍需通过市场的 npm 身份校验与你的确认。
 
-| Surface | Status |
-|---|---|
-| Harness | DeepSeek Harness `dsh-v0.2.1-alpha.1` (GitHub tag, verified 2026-09-25). Verified 2026-09-11 against the dsh-v0.1.7-alpha.1 master checkout (full gate chain + profile install smoke). |
-| Node | `^22.19.0 \|\| >=24.0.0` |
-| Platforms | **Windows first** (UIAutomation + Win32 input, via a bundled PowerShell helper); macOS/Linux backends are reserved and fail closed with a clear reason |
-| Model | Text-only models fully supported (`screen_read` returns structured text); vision models additionally get `screen_shot` images |
+</details>
 
-## What you get
+## 核心能力
 
-`dsh-click` gives the harness a complete observe → act loop over native desktop applications:
+`dsh-click` 把原生桌面拆成可审计的观察面与动作面：
 
-- **`screen_shot`** — screenshot of a window (or the primary screen), downscaled to a configurable bound. With a vision-capable model the result carries the image; otherwise a text description keeps text-only models working.
-- **`screen_read`** — the structured observation: the window's accessibility tree (element ids, types, names, rectangles, supported patterns) plus pixel-location hints with colors — plain text, no image model required.
-- **`click` / `type` / `scroll` / `key`** — window-scoped actions addressed by element id or coordinates. Delivery prefers UIA invoke, falls back to posted window messages — and **never steals foreground focus**.
-- **`app_list` / `app_launch`** — enumerate running applications and their windows; launch one by name or path.
+- **`screen_shot`** —— 截取窗口（或主屏幕），按 `maxScreenshotSide` 缩放。模型支持图像时结果附带图片；纯文本模型则得到文字描述，照常可用。
+- **`screen_read`** —— 结构化观察：无障碍树（元素 id、类型、名称、矩形、支持的模式）加像素位置提示与颜色 —— 纯文本，无需图像模型。
+- **`screen_find`** —— 对没有无障碍树的应用，用可选 OCR（`ocr.*`，挂载时探测 tesseract）或视觉 grounding 按文字/描述找可点目标，返回屏幕坐标与 `observationId`；只读，不需要审批。
+- **`click` / `type` / `scroll` / `key`** —— 以元素 id 或坐标寻址的窗口级操作。优先 UIA invoke，回退到 post 窗口消息，且默认绝不抢占前台焦点；`type` 走 UIA `ValuePattern` 快路径，失败再用 `SendInput` 注入真实按键（CJK 安全）；`key` 对忽略 post 输入的应用会大声拒绝。
+- **`app_list` / `app_launch`** —— 枚举运行中的应用及其可见窗口；按名称或可执行路径启动应用。
 
-Every mutating action crosses one safety boundary:
+每个变更性操作都穿过同一条安全边界：
 
-1. **Freshness** — the action must cite a `basedOn` observation; the window is re-captured right before acting and the action is refused if the screen changed (pixel-hash check + max-age bound).
-2. **Approval** — `ctx.approval` gates every action by default; window-title/executable regexes can allowlist specific windows (still audited).
-3. **Process identity** — the owning process's pid and executable path are verified before **and** after the act; a change refuses the outcome loudly.
-4. **Audit** — observations and actions land in the session log as `dsh-click/observed` / `dsh-click/action` events (sanitized, log-only).
+1. **新鲜度** —— 操作必须引用 `basedOn` 观察；执行前重新捕获窗口，像素哈希（`staleCheckPixels`）或控件树（`staleCheckTree`）变化、或观察超过 `maxObservationAgeMs`，即拒绝并要求重新观察。
+2. **审批** —— 默认经 `ctx.approval` 门禁；`autoApproveWindows` 的窗口标题/可执行路径正则可放行特定窗口（仍做新鲜度与进程身份校验，仍记录审计）。
+3. **进程身份** —— 操作前后分别校验所属进程 pid 与可执行路径；中途换进程即大声拒绝（`PROCESS_CHANGED`）。
+4. **审计** —— 观察与操作以 `dsh-click/observed` / `dsh-click/action` 事件写入会话日志（脱敏、仅日志）。
 
 ```text
-model                           harness
-  │ screen_read ──▶ observationId (+ elements, pixels)         ← structured text
-  │ click {basedOn, target} ──▶ freshness check ──▶ approval ──▶ helper (UIA)
-  │                             pixel hash changed? ── refuse + re-observe
-  │                             pid/exe changed after act? ── PROCESS_CHANGED
-  │ ◀── canonical JSON + audit events (dsh-click/action)
+模型                           harness
+  │ screen_read ──▶ observationId (+ 元素、像素)              ← 结构化文本
+  │ click {basedOn, target} ──▶ 新鲜度校验 ──▶ 审批 ──▶ helper (UIA)
+  │                             像素哈希变化？ ── 拒绝 + 要求重新观察
+  │                             操作后 pid/exe 变化？ ── PROCESS_CHANGED
+  │ ◀── 规范 JSON + 审计事件 (dsh-click/action)
 ```
 
-## Quick start
+### 工具面
 
-```sh
-dsh plugin --profile web add github:PerryLink/dsh-click
-```
+| 工具 | 只读 | 需要审批 | 说明 |
+|---|---|---|---|
+| `screen_shot` | ✅ | — | 返回 `observationId` 供后续操作在 `basedOn` 中引用；模型支持图像时附带图片 |
+| `screen_read` | ✅ | — | 无障碍树 + 像素提示；元素 id 是操作的寻址方式 |
+| `screen_find` | ✅ | — | 无 UIA 树时的 OCR/视觉定位；返回坐标目标 + `observationId` |
+| `click` | | ✅ | `elementId` 与 `(x, y)` 二选一；优先 UIA invoke，回退 post 消息 |
+| `type` | | ✅ | 仅限 value 模式元素；失败时备份并还原控件文本 |
+| `scroll` | | ✅ | 元素（scroll 模式）或窗口（post 滚轮） |
+| `key` | | ✅ | post 按键组合（`"Ctrl+S"`）；忽略 post 输入的应用会大声拒绝 |
+| `app_list` | ✅ | — | 运行中的应用及其可见窗口 |
+| `app_launch` | | ✅ | 按名称或可执行路径启动，可带参数 |
 
-```sh
-# 1. install the bundle into your profile
-dsh plugin --profile web add github:PerryLink/dsh-click
+### 示例
 
-# or from npm (published releases)
-dsh plugin --profile web add dsh-click
+以下为插件真实入口；安装后调用一个即可。
 
-# 2. restart and verify the row
-dsh --profile web --dump-config | grep -A2 'id: dsh-click'
-```
+**详细示例** — 命令 `app_list`，输入：
 
-Then ask the agent to look at a window and act — the approval prompt appears for every mutating action:
-
-```
-> Open Notepad, type "hello", then read back what is on screen.
-```
-
-### Examples
-
-These are the plugin's real entry points; install once, then call one.
-
-#### Detailed example
-
-**Command**
-
-~~~sh
-app_list
-~~~
-
-**Input**
-
-~~~json
+```json
 {}
-~~~
+```
 
-**Output**
+输出：
 
-~~~text
+```text
 1 running application(s) with windows:
 - Demo (pid 4242, C:\Apps\demo.exe)
   - [windowId 1122867] "Demo App" at (10, 20) 800x600
-~~~
+```
 
 *Observed from `plugins/dsh-click/tests/tools.spec.ts:159-185; renderer at src/tools.ts:933-942`*
 
-#### Failure branch
+**失败分支** — 输入：
 
-**Input**
-
-~~~text
+```text
 {}
-~~~
+```
 
-**Output**
+输出：
 
-~~~text
+```text
 Error: dsh-click backend unavailable on linux: Linux backend is reserved but not implemented yet (Windows-first); only Windows can act today
-~~~
+```
 
 *Observed from `plugins/dsh-click/src/platform/selection.ts:61-62,81; plugins/dsh-click/src/tools.ts:133-136; plugins/dsh-click/tests/tools.spec.ts:226-245`*
 
-#### Brief examples
+**简短示例**：`screen_read` · `app_list`
 
-- `screen_read`
-- `app_list`
+## 配置
 
-## Configuration
+所有可调项都是 Schemastery `Config` 字段（可在 cordis.yml 中修改）。按 id 定向覆盖会替换整行 —— 需要重述每个键。`cordis.patch.yml` 逐键内联注释。
 
-All tunables are Schemastery `Config` fields (changeable from cordis.yml). An id-targeted override replaces the whole row — restate every key you need. `cordis.patch.yml` documents each key inline.
+最常用键：
 
-| Key | Default | Meaning |
+| 键 | 默认值 | 含义 |
 |---|---|---|
-| `requireApproval` | `true` | Gate every mutating action behind approval; observers never ask |
-| `autoApproveWindows` | `[]` | Window-title/executable regexes that skip the approval ask (still freshness-checked and audited) |
-| `auditSessionEvents` | `true` | Append `dsh-click/observed` / `dsh-click/action` session audit events. The adaptive gate already skips the append on envelope-less hosts (rc.6–rc.8, 0.1.1-rc.2, and 0.1.2-rc.1, which fails closed on unknown types at read); set `false` to stop audit appends entirely 0.1.2-rc.1 (adapted 2026-09-02): the session envelope keeps its ignorable field for stored-log read compatibility only - Session.append still cannot stamp it, so audit-gate behavior is unchanged. |
-| `focusFallback` | `never` | Whether an action may bring the target window to the foreground as a last resort (`never` / `allow`) |
-| `imageMode` | `auto` | `screen_shot` rendering: `auto` (image when the model accepts images, text otherwise) or `text` |
-| `helperTimeoutMs` | `30000` | Per-helper-call timeout in ms (1..300000) |
-| `maxHelperOutputBytes` | `25165824` | Cap on one helper response in bytes (1024..67108864) |
-| `maxScreenshotSide` | `2560` | Longest screenshot side in pixels (320..7680); larger captures are downscaled |
-| `staleCheckPixels` | `true` | Compare a fresh pixel hash before every action and refuse on change |
-| `staleCheckTree` | `target` | Accessibility-tree freshness: `target` verifies the addressed element (default), `strict` refuses any changed node, `off` skips the tree hash (identity/age/pixel checks still apply) |
-| `maxObservationAgeMs` | `30000` | Maximum age in ms of an observation an action may cite (1000..600000) |
-| `maxCachedObservations` | `8` | LRU cap on cached observations (1..64) |
-| `maxElements` | `500` | Cap on accessibility elements per `screen_read` (1..2000) |
-| `maxTreeDepth` | `32` | Maximum accessibility tree-walk depth (1..64) |
-| `maxTextLength` | `200` | Truncation length for sanitized model-visible strings (16..10000) |
-| `rollbackEnabled` | `true` | Back up and restore control text when `type` fails |
-| `ocr.enabled` / `command` / `language` | `true` / `tesseract` / `eng` | Optional OCR for the `screen_find` path (probed at mount; degrades to unavailable when tesseract is absent) |
+| `requireApproval` | `true` | 每个变更性操作都过审批；观察类工具从不询问 |
+| `autoApproveWindows` | `[]` | 跳过审批询问的窗口标题/可执行路径正则（仍做新鲜度与进程身份校验，仍记录审计） |
+| `focusFallback` | `never` | 操作是否可在最后手段下把目标窗口带到前台（`never` / `allow`） |
+| `imageMode` | `auto` | `screen_shot` 渲染：`auto`（模型支持图像时附图像，否则文字）或 `text` |
+| `staleCheckPixels` | `true` | 每次操作前对比新像素哈希，变化即拒绝 |
+| `staleCheckTree` | `target` | 控件树新鲜度：`target` 校验目标元素（默认），`strict` 任一节点变化即拒绝，`off` 跳过整树哈希（身份/年龄/像素检查仍生效） |
+| `maxObservationAgeMs` | `30000` | 操作可引用观察的最大时限（毫秒，1000..600000） |
+| `auditSessionEvents` | `true` | 是否追加 `dsh-click/observed` / `dsh-click/action` 审计事件；设为 `false` 可完全停止审计追加 |
 
-Example override in your profile patch:
+<details>
+<summary>完整配置表（17 行）</summary>
+
+| 键 | 默认值 | 含义 |
+|---|---|---|
+| `requireApproval` | `true` | 每个变更性操作都过审批；观察类工具从不询问 |
+| `autoApproveWindows` | `[]` | 跳过审批询问的窗口标题/可执行路径正则（仍做新鲜度与进程身份校验，仍记录审计） |
+| `auditSessionEvents` | `true` | 追加 `dsh-click/observed` / `dsh-click/action` 会话审计事件。自适应门已在无信封宿主（rc.6–rc.8、0.1.1-rc.2，以及对未知类型读取即失败的 0.1.2-rc.1）上跳过追加；设为 `false` 可完全停止审计追加。`0.1.2-rc.1`（2026-09-02 已适配）：会话信封保留 ignorable 字段但仅用于存量日志读取兼容——`Session.append` 仍无法盖章，门控行为不变 |
+| `focusFallback` | `never` | 操作是否可在最后手段下把目标窗口带到前台（`never` / `allow`） |
+| `imageMode` | `auto` | `screen_shot` 渲染：`auto`（模型支持图像时附图像，否则文字）或 `text` |
+| `helperTimeoutMs` | `30000` | 每次 helper 调用的超时（毫秒，1..300000） |
+| `maxHelperOutputBytes` | `25165824` | 单次 helper 响应的字节上限（1024..67108864） |
+| `maxScreenshotSide` | `2560` | 截图最长边像素（320..7680）；超出即缩放 |
+| `staleCheckPixels` | `true` | 每次操作前对比新像素哈希，变化即拒绝 |
+| `staleCheckTree` | `target` | 控件树新鲜度：`target` 校验目标元素（默认），`strict` 任一节点变化即拒绝，`off` 跳过整树哈希（身份/年龄/像素检查仍生效） |
+| `maxObservationAgeMs` | `30000` | 操作可引用观察的最大时限（毫秒，1000..600000） |
+| `maxCachedObservations` | `8` | 观察缓存 LRU 上限（1..64） |
+| `maxElements` | `500` | 每次 `screen_read` 的无障碍元素上限（1..2000） |
+| `maxTreeDepth` | `32` | 无障碍树遍历最大深度（1..64） |
+| `maxTextLength` | `200` | 脱敏后模型可见字符串的截断长度（16..10000） |
+| `rollbackEnabled` | `true` | `type` 失败时备份并还原控件文本 |
+| `ocr.enabled` / `command` / `language` | `true` / `tesseract` / `eng` | `screen_find` 的可选 OCR（挂载时探测；无 tesseract 时降级为不可用） |
+
+</details>
+
+profile patch 中的覆盖示例：
 
 ```yaml
 - insert:
@@ -204,87 +218,132 @@ Example override in your profile patch:
         focusFallback: never
 ```
 
-## Tools & surfaces
+## FAQ
 
-| Tool | Read-only | Needs approval | Notes |
-|---|---|---|---|
-| `screen_shot` | ✅ | — | Returns an `observationId` later actions cite in `basedOn`; image attachment when the model accepts images |
-| `screen_read` | ✅ | — | Accessibility tree + pixel hints; element ids are what actions address |
-| `click` | | ✅ | Exactly one of `elementId` or `(x, y)`; UIA invoke preferred, posted messages fallback |
-| `type` | | ✅ | Value-pattern elements only; backs up and restores control text on failure |
-| `scroll` | | ✅ | Element (scroll pattern) or window (posted wheel) |
-| `key` | | ✅ | Posted key combinations (`"Ctrl+S"`); apps that ignore posted input refuse loudly |
-| `app_list` | ✅ | — | Running applications and their visible windows |
-| `app_launch` | | ✅ | By name or executable path, with optional arguments |
+<details>
+<summary>截图和观察缓存存在哪？会不会把屏幕内容写到磁盘？</summary>
 
-## Permissions & data
+`screen_shot` 的截图存进 harness 的 attachment store（内容寻址，受宿主附件策略约束），并只随该次工具结果提供给你正在用的模型。观察本身只在内存里（`maxCachedObservations` 有界 LRU，重启即失）；除此之外插件不落盘、不发网络请求、不存凭据。落进会话日志的只有 `dsh-click/*` 审计事件，窗口标题、可执行路径与自由文本在写入或展示前先脱敏并截断。
 
-- **Permissions**: mutating actions cross the official `ctx.approval` seam — the plugin never re-implements or bypasses it. The allowlist only ever *skips the ask for specific windows*; it cannot disable the freshness or process-identity checks.
-- **Data**: the plugin stores nothing on disk except the screenshots the attachment store keeps (content-addressed, under the harness's own attachment policy). Observations are cached in memory (LRU, bounded). No network requests, no credential storage.
-- **Session log**: `dsh-click/observed` and `dsh-click/action` are log-only audit events carrying sanitized window/process facts — titles, paths, and free text are redacted and length-capped before they are written or shown.
+</details>
 
-## Security boundaries
+<details>
+<summary>在 macOS / Linux 上会怎样？会静默失败吗？</summary>
 
-- **Observe before act, every time.** Actions must cite a fresh observation; a changed screen (pixel hash) or an expired observation is refused with a model-readable reason demanding re-observation.
-- **Approval is the default.** `requireApproval: true` unless you explicitly opt specific windows in; every action — allowed or not — is audit-logged.
-- **No foreground stealing.** The helper never brings a target window to the foreground (`focusFallback: 'never'` by default); input is delivered through UIA or posted messages so background windows are not disturbed.
-- **Process identity is re-verified** immediately before and after each action; a mid-act process swap fails the outcome (`PROCESS_CHANGED`).
-- **Sanitized output.** Control characters are stripped, tabs collapse, credential-shaped values (keys, tokens, JWTs, bearer headers) are redacted before anything reaches the model or the log.
-- **Fail closed.** Unsupported platforms, a missing subprocess service, or an unavailable helper refuse every call loudly — profiles keep booting everywhere.
+不会静默。这两个平台的后端已预留但未实现，每次调用都以模型可读的原因失败关闭（`dsh-click backend unavailable on linux: ...`）；profile 在哪个平台都能正常启动。Windows 上若缺 `subprocess` 服务或 helper 不可用，同样大声拒绝，而不是假装成功。
 
-## Known limitations
+</details>
 
-- **Windows first.** macOS and Linux backends are reserved; on those platforms every call fails closed with a clear reason.
-- **Text-only fidelity.** `screen_read` depends on the application exposing UIAutomation; apps without an accessible tree yield pixel hints only. Coordinate clicks remain available.
-- **Posted-input apps.** Some applications ignore posted window messages (games, some Electron surfaces); `key` reports this honestly instead of pretending success.
-- **Session audit on envelope-less harness builds.** The audit events ride an adaptive gate: hosts that know the vocabulary append plainly, hosts with the `ignorable` envelope append with the marker, and envelope-less hosts — `0.1.0-rc.6`–`0.1.0-rc.8`, `0.1.1-rc.2`, and `0.1.2-rc.1` (which cannot stamp the ignorable marker — the envelope field is retained for stored-log read compatibility only — and fails closed on unknown types at read) — get no audit append; the tool results remain the reconstructable audit trail. Set `auditSessionEvents: false` to stop audit appends entirely.
+<details>
+<summary>会和其他插件抢命令、服务或 slot 吗？</summary>
 
-## Development
+不提供任何 service key，只消费两个可选 seam（`dsh-click/backend`、`dsh-click/grounding`，测试/嵌入用）；不注册客户端 slot、不注册 `webServer` 路由、不装任何 waterfall 监听器；审计事件全部落在 `dsh-click/*` 命名空间。每次工具注册都包在 `ctx.effect` 里，停止/热重载只撤销自己注册的工具。
+
+</details>
+
+<details>
+<summary>性能开销多大？每次动作都要重新截图吗？</summary>
+
+观察按需产生：`screen_read` 只读无障碍树（纯文本），`screen_shot` 才编码 PNG。每次变更性动作前会重新捕获一次目标窗口做新鲜度对比（默认像素哈希 + 控件树），这是安全边界的一部分；helper 调用有 `helperTimeoutMs` / `maxHelperOutputBytes` 兜底，观察缓存默认只留 8 条。
+
+</details>
+
+## 安全边界
+
+- **先观察后行动，每次如此。** 操作必须引用新鲜观察；屏幕变化（像素哈希）或观察过期即拒绝，并以模型可读的原因要求重新观察。
+- **审批是默认。** 除非你显式放行特定窗口，否则 `requireApproval: true`；每次操作 —— 无论放行与否 —— 都记录审计。
+- **不抢前台焦点。** helper 从不把目标窗口带到前台（默认 `focusFallback: 'never'`）；输入经 UIA 或 post 消息送达，不打扰后台窗口。`focusFallback: 'allow'` 是唯一被认可的例外。
+- **进程身份前后复验。** 每个操作前后立即校验进程身份；操作中途进程被替换则判失败（`PROCESS_CHANGED`）。
+- **输出脱敏。** 控制字符被剥离、制表符折叠、凭据形态内容（密钥、token、JWT、bearer 头）在到达模型或日志前一律打码。
+- **失败关闭。** 不支持的平台、缺失的 subprocess 服务或不可用的 helper 都会大声拒绝每个调用 —— profile 在任何地方都能正常启动。
+
+## 权限与数据
+
+- **权限**：变更性操作走官方 `ctx.approval` 接缝 —— 插件从不重实现或绕过它。`autoApproveWindows` 只会*对特定窗口跳过询问*，不能关闭新鲜度或进程身份校验。`dshWorkshop` manifest 声明 `fs:read`、`subprocess:spawn`、`session:append`、`network:none`、`native-code:none`。
+- **数据**：除 attachment store 保存的截图（内容寻址、受 harness 自身附件策略约束）外，插件不落盘任何东西。观察仅存内存（有界 LRU）。无网络请求，不存凭据。
+- **会话日志**：`dsh-click/observed` 与 `dsh-click/action` 是仅日志的审计事件，携带脱敏后的窗口/进程事实 —— 标题、路径与自由文本在写入或展示前均先脱敏并截断。
+
+## 已知限制
+
+- **Windows 优先。** macOS 与 Linux 后端已预留；在这些平台上每次调用都以明确原因失败关闭。
+- **纯文本保真度。** `screen_read` 依赖应用暴露 UIAutomation；没有无障碍树的应用只有像素提示与 `screen_find` 的 OCR/grounding 路径。坐标点击仍然可用。
+- **post 输入类应用。** 部分应用忽略 post 窗口消息（游戏、部分 Electron 界面）；`key` 会如实报告而非假装成功。0.3.24 起 `type` 的 `SendInput` 回退覆盖了真实键盘输入与 CJK 混排，但仍受目标应用自身的输入模型限制。
+- **无信封 harness 构建上的会话审计。** 审计事件走自适应门：认识该词汇的宿主直接追加，带 `ignorable` 信封的宿主带标记追加，无信封宿主——`0.1.0-rc.6`–`0.1.0-rc.8`、`0.1.1-rc.2` 以及无法盖章 ignorable 标记（信封字段仅为存量日志读取兼容而保留）且对未知类型读取即失败的 `0.1.2-rc.1`——不追加审计事件；工具结果仍是可重建的审计轨迹。设 `auditSessionEvents: false` 可完全停止审计追加。
+
+## 与其他 DSH 插件的互操作性
+
+`dsh-click` 只暴露工具面，不参与其他插件的接缝：
+
+- **只注入两个硬服务。** `inject = ['tools', 'subprocess']`；不提供任何 service key，因此不存在服务键冲突。
+- **不占客户端与 HTTP 资源。** 不注册客户端 slot、不注册 `webServer` 路由、不装 `agent/pre-step` / `tools/post-execute` 等 waterfall 监听器，也不改全局对象。
+- **审计命名空间隔离。** 只写 `dsh-click/observed` 与 `dsh-click/action` 两个事件；宿主不认识该词汇时自适应门直接跳过，工具结果仍是可重建的审计轨迹。
+- **可选 seam 可缺省。** `dsh-click/backend` 与 `dsh-click/grounding` 只服务测试/嵌入；真实部署缺省回退到平台选择，不要求任何其他插件在场。
+- **注册即 effect。** 每次 `ctx.tools.register` 都包在 `ctx.effect` 里，停止/热重载只撤销自己注册的工具。
+
+## 兼容性
+
+| 维度 | 状态 |
+|---|---|
+| Harness | DeepSeek Harness `dsh-v0.2.1-alpha.1`（GitHub tag，2026-09-25 已核验）。已于 2026-09-11 对照 `dsh-v0.1.7-alpha.1` master checkout 核验（完整门禁链 + profile 安装冒烟）。`engines.dsh`：`>=0.2.1-0 <0.3.0 \|\| >=0.2.2-0 <0.3.0` |
+| Node | `^22.19.0 \|\| >=24.9.0` |
+| 平台 | **Windows 优先**（UIAutomation + Win32 输入，经内置 PowerShell helper）；macOS/Linux 后端已预留，失败时以明确原因关闭 |
+| 模型 | 纯文本模型完整可用（`screen_read` 输出结构化文本）；视觉模型额外获得 `screen_shot` 图像 |
+
+## 生态与质量
+
+- [Gitee 镜像](https://gitee.com/perrylink/dsh-click)（同步镜像，以 GitHub 为准）
+- [dshfind 插件页](https://dshfind.com/plugins/PerryLink/dsh-click)（安装量与排名）
+- [OpenSSF Scorecard 报告](https://securityscorecards.dev/viewer/?uri=github.com/PerryLink/dsh-click)（由 [.github/workflows/scorecard.yml](.github/workflows/scorecard.yml) 驱动）
+- [dsh-plugin-doctor 验证报告](https://github.com/PerryLink/dsh-plugin-doctor#verified-徽章)（K10–K13 全 `pass`）
+- [DSH Market](https://dsh.market/)（已上架）
+- **1024 商店渠道**：先 `npm i -g dsh1024`，再 `dsh1024 plugin --profile web add dsh-click`（计入 [deepseek1024.com](https://deepseek1024.com) 安装排行）
+- [生态实测知识库](https://perrylink.github.io/dsh-plugin-guide/)：插件开发指南 · 选型实测数据 · 维护取舍判据
+
+## 开发
 
 ```sh
 pnpm install        # node ^22.19 || >=24
-pnpm run typecheck  # tsc: src + tests against the local harness checkout
-pnpm run typecheck:ci  # tsc against the published 0.1.7-rc.2 types (no paths)
-pnpm test           # vitest: 79 tests, 13 files (helper smoke runs on Windows)
-pnpm run build      # tsdown bundle + tsc declarations (lib/)
-pnpm run verify:self-contained  # dependency specs resolve from the registry
-pnpm run verify:artifacts       # built ESM face + native helper present
-pnpm pack           # the published tarball
+pnpm run typecheck  # tsc：src + tests，对照本地 harness checkout
+pnpm run typecheck:ci  # tsc：对照已发布的宿主类型（无 paths）
+pnpm test           # vitest：79 个测试、13 个文件（helper 冒烟在 Windows 上运行）
+pnpm run build      # tsdown bundle + tsc 声明（lib/）
+pnpm run verify:self-contained  # 依赖声明全部来自 registry
+pnpm run verify:artifacts       # 构建产物 ESM 面 + 原生 helper 齐全
+pnpm run check:readmes          # 五语 README 一致性
+pnpm pack           # 发布用 tarball
 ```
 
-## Topics
+配图由 [`scripts/gen-readme-assets.py`](scripts/gen-readme-assets.py) 程序化生成（Python + Pillow），可重复执行：`python scripts/gen-readme-assets.py`。
 
-`dsh`, `dsh-plugin`, `deepseek-harness`, `deepseek`, `cordis`, `computer-use`, `windows-automation`, `uiautomation`, `desktop-control`, `screen-reader`
+Topics：`dsh`, `dsh-plugin`, `deepseek-harness`, `deepseek`, `cordis`, `computer-use`, `windows-automation`, `uiautomation`, `desktop-control`, `screen-reader`
 
-## Contributors
+## 家族与致谢
 
-- [Windows helper smoke checklist](docs/windows-smoke.md) — real input/focus verification for 0.3.24+.
-- [@LIU12312-Source](https://github.com/LIU12312-Source) — real `SendInput`/foreground-focus fallback for the Windows helper (PR #21).
-- [@PerryLink](https://github.com/PerryLink) — creator and maintainer: tool surface, action safety boundary, Windows native helper, sanitizers, and the five-language docs.
-- [@Mchsd](https://github.com/Mchsd) — added the `auditSessionEvents` opt-out for harnesses whose session reader rejects the `dsh-click` audit events (#2).
+本项目是 [PerryLink](https://github.com/PerryLink) 维护的 DeepSeek Harness 插件家族成员（全部 Apache-2.0）。如果这个插件帮到了你，**给个 star** —— 它不解锁任何功能，但会让下一个人更容易找到它。
 
-## PerryLink DSH Plugin Family
-
-This project is part of the DeepSeek Harness plugin family from [PerryLink](https://github.com/PerryLink). The roster stays collapsed below so every README keeps a short first screen; expand it to see every row and its status.
+- [Windows helper 冒烟清单](docs/windows-smoke.md) —— 0.3.24+ 的真实输入/焦点验证步骤。
+- [@LIU12312-Source](https://github.com/LIU12312-Source) —— Windows helper 的真实 `SendInput` / 前台聚焦回退（PR #21）。
+- [@Mchsd](https://github.com/Mchsd) —— 为会话读取器拒绝 `dsh-click` 审计事件的主机新增 `auditSessionEvents` 退出开关（#2）。
+- [@PerryLink](https://github.com/PerryLink) —— 创建者与维护者：工具面、操作安全边界、Windows 原生 helper、脱敏层与五语文档。
 
 <details>
-<summary>Expand all plugins</summary>
+<summary>展开全部插件</summary>
 
-| Plugin | Status |
+| 插件 | 状态 |
 |---|---|
 | **[dsh-aqua-input-check](https://github.com/PerryLink/dsh-aqua-input-check)** |  |
 | **[dsh-archive-check](https://github.com/PerryLink/dsh-archive-check)** |  |
 | **[dsh-auto-review](https://github.com/PerryLink/dsh-auto-review)** |  |
-| **[dsh-autotier](https://github.com/PerryLink/dsh-autotier)** | 🧊 FROZEN — see the repo README |
+| **[dsh-autotier](https://github.com/PerryLink/dsh-autotier)** | 🧊 已冻结 — 见仓库 README |
 | **[dsh-bid-ca-precheck](https://github.com/PerryLink/dsh-bid-ca-precheck)** |  |
 | **[dsh-bid-qual-check](https://github.com/PerryLink/dsh-bid-qual-check)** |  |
-| **[dsh-cert-mcp](https://github.com/PerryLink/dsh-cert-mcp)** | 🧊 FROZEN — see the repo README |
+| **[dsh-cert-mcp](https://github.com/PerryLink/dsh-cert-mcp)** | 🧊 已冻结 — 见仓库 README |
 | **[dsh-checkpoint-rewind](https://github.com/PerryLink/dsh-checkpoint-rewind)** |  |
 | **[dsh-click](https://github.com/PerryLink/dsh-click)** |  |
 | **[dsh-composer-history](https://github.com/PerryLink/dsh-composer-history)** |  |
 | **[dsh-contract-stance](https://github.com/PerryLink/dsh-contract-stance)** |  |
 | **[dsh-customs-doc-check](https://github.com/PerryLink/dsh-customs-doc-check)** |  |
-| **[dsh-data-quality](https://github.com/PerryLink/dsh-data-quality)** |  |
+| **[dsh-data-quality](https://github.com/PerryLink/dsh-data-quality)** | 🧊 已冻结 — 见仓库 README |
 | **[dsh-demurrage-ledger](https://github.com/PerryLink/dsh-demurrage-ledger)** |  |
 | **[dsh-doublecheck](https://github.com/PerryLink/dsh-doublecheck)** |  |
 | **[dsh-drill-script-check](https://github.com/PerryLink/dsh-drill-script-check)** |  |
@@ -317,7 +376,7 @@ This project is part of the DeepSeek Harness plugin family from [PerryLink](http
 | **[dsh-mask](https://github.com/PerryLink/dsh-mask)** |  |
 | **[dsh-mcp-panel](https://github.com/PerryLink/dsh-mcp-panel)** |  |
 | **[dsh-medrec-qc](https://github.com/PerryLink/dsh-medrec-qc)** |  |
-| **[dsh-memento](https://github.com/PerryLink/dsh-memento)** |  |
+| **[dsh-memento](https://github.com/PerryLink/dsh-memento)** | 🧊 已冻结 — 见仓库 README |
 | **[dsh-nsfc-form-check](https://github.com/PerryLink/dsh-nsfc-form-check)** |  |
 | **[dsh-nurse-record-check](https://github.com/PerryLink/dsh-nurse-record-check)** |  |
 | **[dsh-observe](https://github.com/PerryLink/dsh-observe)** |  |
@@ -329,10 +388,10 @@ This project is part of the DeepSeek Harness plugin family from [PerryLink](http
 | **[dsh-permit-report-check](https://github.com/PerryLink/dsh-permit-report-check)** |  |
 | **[dsh-pipeline-check](https://github.com/PerryLink/dsh-pipeline-check)** |  |
 | **[dsh-pleading-draft](https://github.com/PerryLink/dsh-pleading-draft)** |  |
-| **[dsh-plugin-doctor](https://github.com/PerryLink/dsh-plugin-doctor)** |  |
+| **[dsh-plugin-doctor](https://github.com/PerryLink/dsh-plugin-doctor)** | 🚫 已退役（仓库已归档） |
 | **[dsh-plugin-guide](https://github.com/PerryLink/dsh-plugin-guide)** |  |
-| **[dsh-plugin-kit](https://github.com/PerryLink/dsh-plugin-kit)** |  |
-| **[dsh-plugin-upgrade](https://github.com/PerryLink/dsh-plugin-upgrade)** |  |
+| **[dsh-plugin-kit](https://github.com/PerryLink/dsh-plugin-kit)** | 🚫 已退役（仓库已归档） |
+| **[dsh-plugin-upgrade](https://github.com/PerryLink/dsh-plugin-upgrade)** | 🚫 已退役（仓库已归档） |
 | **[dsh-policy-brief-draft](https://github.com/PerryLink/dsh-policy-brief-draft)** |  |
 | **[dsh-power-loss-split](https://github.com/PerryLink/dsh-power-loss-split)** |  |
 | **[dsh-power-ticket-check](https://github.com/PerryLink/dsh-power-ticket-check)** |  |
@@ -344,7 +403,7 @@ This project is part of the DeepSeek Harness plugin family from [PerryLink](http
 | **[dsh-review-reply-check](https://github.com/PerryLink/dsh-review-reply-check)** |  |
 | **[dsh-rulefile-check](https://github.com/PerryLink/dsh-rulefile-check)** |  |
 | **[dsh-safety-brief-check](https://github.com/PerryLink/dsh-safety-brief-check)** |  |
-| **[dsh-score](https://github.com/PerryLink/dsh-score)** |  |
+| **[dsh-score](https://github.com/PerryLink/dsh-score)** | 🧊 已冻结 — 见仓库 README |
 | **[dsh-session-sync](https://github.com/PerryLink/dsh-session-sync)** |  |
 | **[dsh-site-log-check](https://github.com/PerryLink/dsh-site-log-check)** |  |
 | **[dsh-skill-pack-security](https://github.com/PerryLink/dsh-skill-pack-security)** |  |
@@ -356,20 +415,22 @@ This project is part of the DeepSeek Harness plugin family from [PerryLink](http
 | **[dsh-tender-extract](https://github.com/PerryLink/dsh-tender-extract)** |  |
 | **[dsh-tender-matrix](https://github.com/PerryLink/dsh-tender-matrix)** |  |
 | **[dsh-test-drive](https://github.com/PerryLink/dsh-test-drive)** |  |
-| **[dsh-ticktick](https://github.com/PerryLink/dsh-ticktick)** |  |
+| **[dsh-ticktick](https://github.com/PerryLink/dsh-ticktick)** | 🚫 已退役（仓库已归档） |
 | **[dsh-translate](https://github.com/PerryLink/dsh-translate)** |  |
 | **[dsh-warranty-calc](https://github.com/PerryLink/dsh-warranty-calc)** |  |
-| **[dsh-budget](https://github.com/PerryLink/dsh-budget)** | 🧊 FROZEN — see the repo README |
-| **[dsh-claude-move](https://github.com/PerryLink/dsh-claude-move)** | 🧊 FROZEN — see the repo README |
-| **[dsh-defend](https://github.com/PerryLink/dsh-defend)** | 🧊 FROZEN — see the repo README |
-| **[dsh-draw](https://github.com/PerryLink/dsh-draw)** | 🧊 FROZEN — see the repo README |
-| **[dsh-reach](https://github.com/PerryLink/dsh-reach)** | 🧊 FROZEN — see the repo README |
-| **[dsh-background-agents](https://github.com/PerryLink/dsh-background-agents)** | 🚫 RETIRED — see the repo README |
-| **[dsh-session-pin](https://github.com/PerryLink/dsh-session-pin)** | 🚫 RETIRED — see the repo README |
-| **[dsh-team-rooms](https://github.com/PerryLink/dsh-team-rooms)** | 🚫 RETIRED — see the repo README |
+| **[dsh-budget](https://github.com/PerryLink/dsh-budget)** | 🧊 已冻结 — 见仓库 README |
+| **[dsh-claude-move](https://github.com/PerryLink/dsh-claude-move)** | 🧊 已冻结 — 见仓库 README |
+| **[dsh-defend](https://github.com/PerryLink/dsh-defend)** | 🧊 已冻结 — 见仓库 README |
+| **[dsh-draw](https://github.com/PerryLink/dsh-draw)** | 🧊 已冻结 — 见仓库 README |
+| **[dsh-reach](https://github.com/PerryLink/dsh-reach)** | 🧊 已冻结 — 见仓库 README |
+| **[dsh-background-agents](https://github.com/PerryLink/dsh-background-agents)** | 🚫 已退役（仓库已归档） |
+| **[dsh-session-pin](https://github.com/PerryLink/dsh-session-pin)** | 🚫 已退役（仓库已归档） |
+| **[dsh-team-rooms](https://github.com/PerryLink/dsh-team-rooms)** | 🚫 已退役（仓库已归档） |
 
 </details>
 
 ## License
 
-[Apache License 2.0](LICENSE) © 2026 dsh-click contributors
+[LICENSE](LICENSE)（Apache License 2.0）© 2026 dsh-click contributors
+
+<p align="center"><sub>Apache-2.0 · 社区插件，与 DeepSeek 无关。</sub></p>
