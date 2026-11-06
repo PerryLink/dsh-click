@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-flow-dark.svg">
-  <img src="docs/assets/dsh-click-flow-light.svg" width="100%" alt="dsh-click observe-to-act loop: screen_read / screen_shot yields an observationId, click / type / scroll / key cite it via basedOn, freshness is checked against the pixel hash and maxObservationAgeMs, ctx.approval gates the action, pid / exe identity is verified before and after, and every fact lands in dsh-click/observed plus dsh-click/action audit events">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-hero-en-dark.webp">
+  <img src="docs/assets/dsh-click-hero-en-light.webp" width="100%" alt="dsh-click: a desktop window's accessibility elements (e12 Edit, e13 Button) are read by screen_read into an observationId; actions cite it via basedOn, cross the freshness, approval and process-identity safety boundary, run through the Windows UIA helper, and land as dsh-click/observed and dsh-click/action audit events">
 </picture>
 
 # dsh-click
@@ -37,6 +37,11 @@ dsh plugin --profile <name> add dsh-click
 ## What it is
 
 `dsh-click` gives the model a complete observe → act loop: `screen_read` returns a window’s accessibility tree (element ids, types, names, rectangles, supported patterns) plus pixel-location hints, or `screen_shot` captures an image; then `click` / `type` / `scroll` / `key` act on that same window by element id or coordinates. Every mutating action must cite a fresh observation (`basedOn`) — a changed screen or an expired observation is refused with a model-readable reason — and crosses `ctx.approval` by default, with the target process identity verified before and after. It does not steal foreground focus by default (`focusFallback: never`), and every observation and action lands as a sanitized `dsh-click/observed` / `dsh-click/action` audit event.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-flow-v5-dark.svg">
+  <img src="docs/assets/dsh-click-flow-v5-light.svg" width="100%" alt="dsh-click boundary two-sided structure: the read-only observe plane on the left produces an observationId; the SAFETY BOUNDARY in the middle checks basedOn, freshness, approval, helper dispatch and process identity, returning refusals to screen_read; the mutating act plane on the right acts through the helper; both sanitized audit events sit on the bottom rail">
+</picture>
 
 ## Three-step setup
 

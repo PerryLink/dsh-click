@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-flow-dark.svg">
-  <img src="docs/assets/dsh-click-flow-light.svg" width="100%" alt="Ciclo observar→agir do dsh-click: screen_read / screen_shot produz um observationId, click / type / scroll / key o citam em basedOn, a frescura é verificada pelo hash de píxeis e por maxObservationAgeMs, ctx.approval autoriza a ação, a identidade pid / exe é verificada antes e depois, e tudo fica nos eventos de auditoria dsh-click/observed e dsh-click/action">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-hero-en-dark.webp">
+  <img src="docs/assets/dsh-click-hero-en-light.webp" width="100%" alt="dsh-click: os elementos de acessibilidade de uma janela (e12 Edit, e13 Button) são lidos por screen_read e viram um observationId; as ações citam-no em basedOn, atravessam a fronteira de segurança de frescura, aprovação e identidade do processo, executam pelo helper UIA do Windows e ficam nos eventos de auditoria dsh-click/observed e dsh-click/action">
 </picture>
 
 # dsh-click
@@ -37,6 +37,11 @@ dsh plugin --profile <name> add dsh-click
 ## O que é
 
 O `dsh-click` dá ao modelo um ciclo completo de observar → agir: `screen_read` lê a árvore de acessibilidade de uma janela (ids de elemento, tipos, nomes, retângulos, padrões suportados) mais dicas de posição e cor, ou `screen_shot` captura uma imagem; depois `click` / `type` / `scroll` / `key` agem nessa mesma janela por id de elemento ou coordenadas. Toda ação mutante precisa citar uma observação fresca (`basedOn`); se a tela mudou ou a observação expirou, a ação é recusada com um motivo legível para o modelo; além disso passa por `ctx.approval` por padrão, e a identidade do processo alvo é verificada antes e depois. Não rouba o foco de primeiro plano por padrão (`focusFallback: never`), e cada observação e ação vira um evento de auditoria `dsh-click/observed` / `dsh-click/action` já sanitizado.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-flow-v5-dark.svg">
+  <img src="docs/assets/dsh-click-flow-v5-light.svg" width="100%" alt="Estrutura de dois lados do dsh-click: o plano de observação só de leitura à esquerda produz um observationId; a SAFETY BOUNDARY central verifica basedOn, frescura, aprovação, despacho ao helper e identidade do processo, devolvendo recusas a screen_read; o plano de ações mutantes à direita atua pelo helper; os dois eventos de auditoria saneados ficam na barra inferior">
+</picture>
 
 ## Instalação em três passos
 

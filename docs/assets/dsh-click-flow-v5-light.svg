@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="660" viewBox="0 0 1100 660" role="img" aria-label="dsh-click: a read-only observe plane on the left, a mutating act plane on the right, and a safety boundary wall between them that resolves the basedOn citation, checks freshness, gates approval, dispatches through the PowerShell UIA helper, and verifies process identity before and after">
+<title>dsh-click: one safety boundary between observe and act</title>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
+    <stop offset="0" stop-color="#f9f6fd"/>
+    <stop offset="1" stop-color="#e4eaf8"/>
+  </linearGradient>
+  <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#4B67B4" stop-opacity=".16"/>
+    <stop offset="1" stop-color="#4B67B4" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="soft" x="-30%" y="-30%" width="160%" height="180%">
+    <feDropShadow dx="0" dy="8" stdDeviation="11" flood-color="#1b1735" flood-opacity="0.10"/>
+  </filter>
+  <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse">
+    <circle cx="1.4" cy="1.4" r="1.4" fill="#d9d3ea"/>
+  </pattern>
+</defs>
+<rect width="1100" height="660" fill="url(#bg)"/>
+<rect width="1100" height="660" fill="url(#dots)" opacity=".42"/>
+<circle cx="550" cy="360" r="330" fill="url(#halo)"/>
+<text x="44" y="58" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="33" font-weight="700">dsh-click</text>
+<text x="44" y="86" fill="#4d5261" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="15">read-only observe plane · one safety boundary · mutating act plane</text>
+<rect x="700" y="38" width="356" height="36" rx="18" fill="#ece7f9"/>
+<text x="878" y="61" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" text-anchor="middle">Windows · UIAutomation · focus never</text>
+<line x1="40" y1="104" x2="1060" y2="104" stroke="#e7e4f0" stroke-width="1.5"/>
+<text x="44" y="136" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16" font-weight="700" letter-spacing="1.6">OBSERVE</text>
+<text x="44" y="158" fill="#4d5261" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="14">read-only · never asks approval</text>
+<g filter="url(#soft)"><rect x="40" y="178" width="350" height="224" rx="18" fill="#ffffff" stroke="#e4e1ee" stroke-width="1.5"/></g>
+<text x="60" y="202" fill="#8f94a4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" letter-spacing="1.2">READ-ONLY TOOLS</text>
+<line x1="60" y1="212" x2="370" y2="212" stroke="#e7e4f0" stroke-width="1.2"/>
+<circle cx="66" cy="233" r="2.8" fill="#4B67B4" opacity=".6"/>
+<text x="78" y="238" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17.5" font-weight="700">screen_read</text>
+<text x="78" y="256" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">a11y tree · elementId · pixels</text>
+<circle cx="66" cy="277" r="2.8" fill="#4B67B4" opacity=".6"/>
+<text x="78" y="282" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17.5" font-weight="700">screen_shot</text>
+<text x="78" y="300" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">PNG · or text description</text>
+<circle cx="66" cy="321" r="2.8" fill="#4B67B4" opacity=".6"/>
+<text x="78" y="326" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17.5" font-weight="700">screen_find</text>
+<text x="78" y="344" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">OCR / grounding → (x, y)</text>
+<circle cx="66" cy="365" r="2.8" fill="#4B67B4" opacity=".6"/>
+<text x="78" y="370" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17.5" font-weight="700">app_list</text>
+<text x="78" y="388" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">windows · no observationId</text>
+<line x1="215" y1="402" x2="215" y2="412" stroke="#4B67B4" stroke-width="2" opacity=".8"/>
+<path d="M209 414 L215 421 L221 414" fill="none" stroke="#4B67B4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+<text x="228" y="416" fill="#8f94a4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">record → LRU</text>
+<g filter="url(#soft)"><rect x="40" y="422" width="350" height="118" rx="18" fill="#ffffff" stroke="#e4e1ee" stroke-width="1.5"/></g>
+<text x="60" y="446" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="700" letter-spacing="1.2">OBSERVATION</text>
+<text x="370" y="446" fill="#8f94a4" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="14" text-anchor="end">→ model</text>
+<text x="60" y="474" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" font-weight="700">3f9a7e04…c21d</text>
+<line x1="60" y1="486" x2="370" y2="486" stroke="#e7e4f0" stroke-width="1.2"/>
+<text x="60" y="506" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">treeHash 8c1e · shotHash 42af</text>
+<text x="60" y="526" fill="#8f94a4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">maxObservationAgeMs 30000 · LRU 8</text>
+<g filter="url(#soft)"><rect x="420" y="120" width="280" height="480" rx="22" fill="#f5f2fb" stroke="#e3def1" stroke-width="1.5"/></g>
+<line x1="432" y1="150" x2="432" y2="592" stroke="#4B67B4" stroke-width="1" stroke-dasharray="2 8" opacity=".28"/>
+<line x1="688" y1="150" x2="688" y2="592" stroke="#4B67B4" stroke-width="1" stroke-dasharray="2 8" opacity=".28"/>
+<rect x="444" y="126" width="232" height="3" rx="1.5" fill="#4B67B4" opacity=".55"/>
+<text x="452" y="154" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" font-weight="700" letter-spacing="1.1">SAFETY BOUNDARY</text>
+<text x="452" y="176" fill="#4d5261" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="14">fail-closed · one path</text>
+<line x1="444" y1="190" x2="676" y2="190" stroke="#e7e4f0" stroke-width="1.2"/>
+<line x1="458" y1="220" x2="458" y2="528" stroke="#4B67B4" stroke-width="1.5" opacity=".35"/>
+<circle cx="458" cy="206" r="12" fill="#ffffff" stroke="#4B67B4" stroke-width="1.5"/>
+<text x="458" y="210.5" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="700" text-anchor="middle">1</text>
+<text x="480" y="211" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" font-weight="700">basedOn</text>
+<text x="480" y="229" fill="#4d5261" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="14">resolve cited obs</text>
+<rect x="480" y="235" width="200" height="21" rx="10.5" fill="#ece7f9"/>
+<text x="490" y="251" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">UNKNOWN_OBSERVATION</text>
+<circle cx="458" cy="290" r="12" fill="#ffffff" stroke="#4B67B4" stroke-width="1.5"/>
+<text x="458" y="294.5" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="700" text-anchor="middle">2</text>
+<text x="480" y="295" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" font-weight="700">freshness</text>
+<text x="480" y="313" fill="#4d5261" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="14">age · identity · tree</text>
+<rect x="480" y="319" width="200" height="21" rx="10.5" fill="#ece7f9"/>
+<text x="490" y="335" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">EXPIRED · STALE_*</text>
+<circle cx="458" cy="374" r="12" fill="#ffffff" stroke="#4B67B4" stroke-width="1.5"/>
+<text x="458" y="378.5" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="700" text-anchor="middle">3</text>
+<text x="480" y="379" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" font-weight="700">approval</text>
+<text x="480" y="397" fill="#4d5261" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="14">ctx.approval · allowlist</text>
+<rect x="480" y="403" width="200" height="21" rx="10.5" fill="#ece7f9"/>
+<text x="490" y="419" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">APPROVAL_DENIED</text>
+<circle cx="458" cy="458" r="12" fill="#ffffff" stroke="#4B67B4" stroke-width="1.5"/>
+<text x="458" y="462.5" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="700" text-anchor="middle">4</text>
+<text x="480" y="463" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" font-weight="700">dispatch</text>
+<text x="480" y="481" fill="#4d5261" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="14">helper · UIA / posted</text>
+<rect x="480" y="487" width="200" height="21" rx="10.5" fill="#ece7f9"/>
+<text x="490" y="503" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">helper: uia | posted</text>
+<circle cx="458" cy="542" r="12" fill="#ffffff" stroke="#4B67B4" stroke-width="1.5"/>
+<text x="458" y="546.5" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="700" text-anchor="middle">5</text>
+<text x="480" y="547" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" font-weight="700">identity</text>
+<text x="480" y="565" fill="#4d5261" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="14">pid / exe before/after</text>
+<rect x="480" y="571" width="200" height="21" rx="10.5" fill="#ece7f9"/>
+<text x="490" y="587" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">PROCESS_CHANGED</text>
+<path d="M390 452 H405 V206 H414" fill="none" stroke="#4B67B4" stroke-width="2" opacity=".65" stroke-linejoin="round"/>
+<path d="M414 202 L421 206 L414 210 Z" fill="#4B67B4" opacity=".8"/>
+<path d="M420 585 H230 V548" fill="none" stroke="#b0470f" stroke-width="2" stroke-dasharray="6 5" opacity=".85"/>
+<path d="M225 552 L230 543 L235 552 Z" fill="#b0470f" opacity=".9"/>
+<text x="44" y="572" fill="#8f94a4" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="14">refusals are returned</text>
+<text x="44" y="590" fill="#b0470f" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">→ screen_read again</text>
+<text x="734" y="136" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16" font-weight="700" letter-spacing="1.6">ACT</text>
+<text x="734" y="158" fill="#4d5261" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="14">mutating · approval by default</text>
+<g filter="url(#soft)"><rect x="730" y="178" width="330" height="242" rx="18" fill="#ffffff" stroke="#e4e1ee" stroke-width="1.5"/></g>
+<text x="750" y="202" fill="#8f94a4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" letter-spacing="1.2">MUTATING TOOLS</text>
+<text x="1040" y="202" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" text-anchor="end">basedOn required</text>
+<line x1="750" y1="212" x2="1040" y2="212" stroke="#e7e4f0" stroke-width="1.2"/>
+<circle cx="756" cy="233" r="2.8" fill="#4B67B4" opacity=".6"/>
+<text x="768" y="238" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17.5" font-weight="700">click</text>
+<text x="768" y="256" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">elementId | (x, y) · uia → post</text>
+<circle cx="756" cy="269" r="2.8" fill="#4B67B4" opacity=".6"/>
+<text x="768" y="274" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17.5" font-weight="700">type</text>
+<text x="768" y="292" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">value pattern · rollback text</text>
+<circle cx="756" cy="305" r="2.8" fill="#4B67B4" opacity=".6"/>
+<text x="768" y="310" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17.5" font-weight="700">scroll</text>
+<text x="768" y="328" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">element | window · post wheel</text>
+<circle cx="756" cy="341" r="2.8" fill="#4B67B4" opacity=".6"/>
+<text x="768" y="346" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17.5" font-weight="700">key</text>
+<text x="768" y="364" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">posted keys · loud refusal</text>
+<circle cx="756" cy="377" r="2.8" fill="#4B67B4" opacity=".6"/>
+<text x="768" y="382" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17.5" font-weight="700">app_launch</text>
+<text x="768" y="400" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">gate only · no observation</text>
+<g filter="url(#soft)"><rect x="730" y="432" width="330" height="88" rx="18" fill="#ffffff" stroke="#e4e1ee" stroke-width="1.5"/></g>
+<text x="750" y="458" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" font-weight="700">helper · powershell.exe</text>
+<text x="750" y="478" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">UIAutomation · posted input · JSON</text>
+<g filter="url(#soft)"><rect x="730" y="540" width="330" height="64" rx="18" fill="#ffffff" stroke="#e4e1ee" stroke-width="1.5"/></g>
+<text x="750" y="566" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" font-weight="700">target window · pid 4242</text>
+<text x="750" y="586" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">focusFallback: never · no steal</text>
+<path d="M730 206 H704" fill="none" stroke="#4B67B4" stroke-width="2" opacity=".75"/>
+<path d="M708 201 L700 206 L708 211 Z" fill="#4B67B4" opacity=".85"/>
+<path d="M700 458 H726" fill="none" stroke="#4B67B4" stroke-width="2" opacity=".75"/>
+<path d="M722 453 L730 458 L722 463 Z" fill="#4B67B4" opacity=".85"/>
+<path d="M885 520 V534" fill="none" stroke="#4B67B4" stroke-width="2" opacity=".7"/>
+<path d="M880 530 L885 538 L890 530" fill="none" stroke="#4B67B4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+<text x="897" y="532" fill="#8f94a4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">pid before / after</text>
+<path d="M730 542 H704" fill="none" stroke="#4B67B4" stroke-width="1.6" stroke-dasharray="5 4" opacity=".6"/>
+<path d="M708 537 L700 542 L708 547 Z" fill="#4B67B4" opacity=".7"/>
+<g filter="url(#soft)"><rect x="40" y="616" width="1020" height="32" rx="16" fill="#ffffff" stroke="#e4e1ee" stroke-width="1.5"/></g>
+<text x="60" y="637" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="700" letter-spacing="1.2">AUDIT</text>
+<text x="118" y="637" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">dsh-click/observed</text>
+<text x="278" y="637" fill="#8f94a4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">·</text>
+<text x="294" y="637" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">dsh-click/action</text>
+<text x="1040" y="637" fill="#8f94a4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" text-anchor="end">sanitized · log-only · control chars stripped</text>
+</svg>

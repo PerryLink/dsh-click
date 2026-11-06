@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-flow-dark.svg">
-  <img src="docs/assets/dsh-click-flow-light.svg" width="100%" alt="dsh-click का देखो→करो चक्र: screen_read / screen_shot एक observationId देता है, click / type / scroll / key उसे basedOn में उद्धृत करते हैं, pixel hash और maxObservationAgeMs से ताज़गी जाँची जाती है, ctx.approval कार्रवाई को मंज़ूरी देता है, कार्रवाई से पहले और बाद में pid / exe पहचान सत्यापित होती है, और सब कुछ dsh-click/observed तथा dsh-click/action ऑडिट इवेंट में दर्ज होता है">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-hero-en-dark.webp">
+  <img src="docs/assets/dsh-click-hero-en-light.webp" width="100%" alt="dsh-click: किसी विंडो के accessibility तत्व (e12 Edit, e13 Button) screen_read से पढ़े जाकर observationId बनते हैं; कार्रवाइयाँ basedOn में उसे उद्धृत करती हैं, freshness, approval और process-identity सुरक्षा सीमा पार करके Windows UIA helper से चलती हैं, और dsh-click/observed तथा dsh-click/action ऑडिट इवेंट में दर्ज होती हैं">
 </picture>
 
 # dsh-click
@@ -37,6 +37,11 @@ dsh plugin --profile <name> add dsh-click
 ## यह क्या है
 
 `dsh-click` मॉडल को पूरा «देखो → करो» चक्र देता है: `screen_read` किसी विंडो का accessibility tree (तत्व id, प्रकार, नाम, आयत, समर्थित पैटर्न) और pixel स्थिति-संकेत पढ़ता है, या `screen_shot` तस्वीर लेता है; फिर `click` / `type` / `scroll` / `key` उसी विंडो पर तत्व id या निर्देशांक से काम करते हैं। हर बदलाव वाली कार्रवाई को ताज़ा अवलोकन (`basedOn`) उद्धृत करना ही होता है — स्क्रीन बदल गई या अवलोकन पुराना हुआ तो कार्रवाई मॉडल-पठनीय कारण के साथ अस्वीकार होती है; साथ ही डिफ़ॉल्ट रूप से `ctx.approval` से गुज़रती है और लक्ष्य प्रक्रिया की पहचान कार्रवाई से पहले व बाद में सत्यापित होती है। यह डिफ़ॉल्ट रूप से foreground फ़ोकस नहीं छीनता (`focusFallback: never`), और हर अवलोकन व कार्रवाई sanitized `dsh-click/observed` / `dsh-click/action` ऑडिट इवेंट बनती है।
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-flow-v5-dark.svg">
+  <img src="docs/assets/dsh-click-flow-v5-light.svg" width="100%" alt="dsh-click की दो-पक्षीय संरचना: बाईं read-only observe plane observationId बनाती है; बीच की SAFETY BOUNDARY basedOn, freshness, approval, helper dispatch और process identity जाँचती है और अस्वीकृति को screen_read पर लौटाती है; दाईं mutating act plane helper से काम करती है; नीचे दोनों sanitized ऑडिट इवेंट हैं">
+</picture>
 
 ## तीन चरणों में शुरुआत
 

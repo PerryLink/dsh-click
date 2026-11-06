@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-flow-dark.svg">
-  <img src="docs/assets/dsh-click-flow-light.svg" width="100%" alt="dsh-click 的观察→行动闭环：screen_read / screen_shot 产出 observationId，click / type / scroll / key 以 basedOn 引用它，动作前过像素哈希与 maxObservationAgeMs 新鲜度校验、再经 ctx.approval 审批，动作前后校验 pid / exe 进程身份，全部事实写入 dsh-click/observed 与 dsh-click/action 审计事件">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-hero-zh-dark.webp">
+  <img src="docs/assets/dsh-click-hero-zh-light.webp" width="100%" alt="dsh-click：窗口的无障碍元素（e12 Edit、e13 Button）经 screen_read 变成 observationId，动作以 basedOn 引用它，穿过新鲜度、审批与进程身份安全边界，由 Windows UIA helper 执行，并写入 dsh-click/observed 与 dsh-click/action 审计事件">
 </picture>
 
 # dsh-click
@@ -37,6 +37,11 @@ dsh plugin --profile <name> add dsh-click
 ## 它是什么
 
 `dsh-click` 给模型一条完整的「观察 → 行动」通道：先用 `screen_read` 读窗口的无障碍树（元素 id、类型、名称、矩形、支持的模式）与像素位置提示，或用 `screen_shot` 截一张图；再用 `click` / `type` / `scroll` / `key` 按元素 id 或坐标操作同一个窗口。每个变更性动作都必须引用一次新鲜观察（`basedOn`）——屏幕变了或观察过期就拒绝，并给出模型可读的理由；默认还要过 `ctx.approval` 审批，动作前后各校验一次目标进程身份。它默认不抢前台焦点（`focusFallback: never`），所有观察与操作都落成脱敏的 `dsh-click/observed` / `dsh-click/action` 审计事件。
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-click-flow-v5-dark.svg">
+  <img src="docs/assets/dsh-click-flow-v5-light.svg" width="100%" alt="dsh-click 的边界双侧结构：左侧只读观察面（screen_read / screen_shot / screen_find / app_list）产出 observationId；中间 SAFETY BOUNDARY 依次校验 basedOn、新鲜度、审批、helper 派发与进程身份，拒绝路径回到重新观察；右侧变更动作面（click / type / scroll / key / app_launch）经 helper 作用于目标窗口；底部是 dsh-click/observed 与 dsh-click/action 两条脱敏审计事件">
+</picture>
 
 ## 三步上手
 
