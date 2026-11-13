@@ -570,7 +570,13 @@ function Test-BitmapLooksBlank($bitmap, $strict) {
   $mean = $sum / $count
   $variance = [Math]::Max(0.0, ($sumSquares / $count) - ($mean * $mean))
   $deviation = [Math]::Sqrt($variance)
-  if ($deviation -lt 2) { return $true }
+  # A frame that painted nothing is flat AND dark (mean 0 for a failed PrintWindow, whether
+  # transparent or opaque black). A flat but bright frame is a real solid-colour UI - an
+  # unfocused, empty window whose title bar matches the client area - so the variance alone
+  # must not reject it: at 200% scaling those windows were falling back to CopyFromScreen and
+  # capturing whatever covered them (#35). Dark/flat and the 99%-dark rule below still catch
+  # the frames that really are empty.
+  if ($deviation -lt 2 -and $mean -lt 8) { return $true }
   if ($strict -and $colors.Count -le 6) { return $true }
 
   # Full-frame dark ratio: a PrintWindow frame that painted nothing at all.
