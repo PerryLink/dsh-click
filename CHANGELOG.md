@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.28] - 2026-11-13
+
+### Fixed
+
+- **The helper is now DPI-aware, so every coordinate and screenshot is in physical pixels.** `powershell.exe` starts DPI-unaware, so `GetWindowRect` / `GetSystemMetrics` / `GetClientRect` returned logical pixels while UIA `BoundingRectangle` and the screen DC were physical. On a 200% display that is a clean 2x mismatch: `screen_shot` allocated a 1920x1080 bitmap and BitBlt copied the top-left 1920x1080 of the 3840x2160 surface (a crop, not a scaled image), and elements in the right/bottom half failed the client-area check. The helper now sets Per-Monitor V2 (`SetProcessDpiAwarenessContext(-4)`) before any window API, falling back to `SetProcessDpiAwareness(2)` and `SetProcessDPIAware()`. Fixes the size/unit half of #35.
+- New read-only `metrics` op returns the effective DPI awareness, screen and virtual-screen metrics and the monitor count, so a user can report the DPI state without taking a screenshot.
+
 ## [0.3.27] - 2026-11-05
 
 ### Changed
