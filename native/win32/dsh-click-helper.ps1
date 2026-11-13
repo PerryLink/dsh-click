@@ -150,6 +150,27 @@ public static class DshClickWin32 {
   [DllImport("user32.dll")]
   public static extern int GetSystemMetrics(int index);
 
+  // DPI awareness. The helper is hosted by powershell.exe, whose manifest
+  // declares no DPI awareness, so GetWindowRect/GetSystemMetrics/GetClientRect
+  // return logical pixels while UIA BoundingRectangle and the screen DC are
+  // physical. On a 200% display that is a clean 2x mismatch (and a 1:1 BitBlt
+  // of a logical-sized rect is a crop of the physical surface, not a scaled
+  // image). Per-Monitor V2 is set before any window or metric API runs.
+  [DllImport("user32.dll", SetLastError = true)]
+  public static extern bool SetProcessDpiAwarenessContext(IntPtr context);
+
+  [DllImport("user32.dll")]
+  public static extern IntPtr GetThreadDpiAwarenessContext();
+
+  [DllImport("user32.dll")]
+  public static extern int GetAwarenessFromDpiAwarenessContext(IntPtr context);
+
+  [DllImport("shcore.dll")]
+  public static extern int SetProcessDpiAwareness(int awareness);
+
+  [DllImport("user32.dll")]
+  public static extern bool SetProcessDPIAware();
+
   [DllImport("kernel32.dll", SetLastError = true)]
   public static extern IntPtr OpenProcess(uint access, bool inherit, uint processId);
 
@@ -186,6 +207,33 @@ public static class DshClickWin32 {
   }
 }
 '@ | Out-Null
+
+# ---------------------------------------------------------------------------
+# DPI awareness (must run before any HWND/metric API).
+# ---------------------------------------------------------------------------
+# DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4. Each helper process serves
+# exactly one request, so setting it once here is enough. Fall back to the
+# 8.1+ shcore call and then to the Vista-era system-aware call; if every call
+# fails, keep the old behaviour instead of breaking the request.
+$script:DpiAwareness = 0
+try {
+  if ([DshClickWin32]::SetProcessDpiAwarenessContext([IntPtr](-4))) { $script:DpiAwareness = 2 }
+} catch { }
+if ($script:DpiAwareness -eq 0) {
+  try {
+    if ([DshClickWin32]::SetProcessDpiAwareness(2) -eq 0) { $script:DpiAwareness = 2 }
+  } catch { }
+}
+if ($script:DpiAwareness -eq 0) {
+  try {
+    if ([DshClickWin32]::SetProcessDPIAware()) { $script:DpiAwareness = 1 }
+  } catch { }
+}
+if ($script:DpiAwareness -eq 0) {
+  try {
+    $script:DpiAwareness = [DshClickWin32]::GetAwarenessFromDpiAwarenessContext([DshClickWin32]::GetThreadDpiAwarenessContext())
+  } catch { }
+}
 
 # ---------------------------------------------------------------------------
 # Response plumbing.
@@ -966,6 +1014,27 @@ function Invoke-OpLaunch($opArgs) {
 }
 
 # ---------------------------------------------------------------------------
+# Metrics: DPU/DPI diagnostics without touching a window.
+# ---------------------------------------------------------------------------
+function Invoke-OpMetrics {
+  # 0 = unaware (legacy bug), 1 = system-aware, 2 = per-monitor.
+  return @{
+    awareness = [int]$script:DpiAwareness
+    screen = @{
+      width = [int][DshClickWin32]::GetSystemMetrics(0)   # SM_CXSCREEN
+      height = [int][DshClickWin32]::GetSystemMetrics(1)  # SM_CYSCREEN
+    }
+    virtualScreen = @{
+      x = [int][DshClickWin32]::GetSystemMetrics(76)      # SM_XVIRTUALSCREEN
+      y = [int][DshClickWin32]::GetSystemMetrics(77)      # SM_YVIRTUALSCREEN
+      width = [int][DshClickWin32]::GetSystemMetrics(78)  # SM_CXVIRTUALSCREEN
+      height = [int][DshClickWin32]::GetSystemMetrics(79) # SM_CYVIRTUALSCREEN
+    }
+    monitors = [int][DshClickWin32]::GetSystemMetrics(80) # SM_CMONITORS
+  }
+}
+
+# ---------------------------------------------------------------------------
 # Entry point.
 # ---------------------------------------------------------------------------
 try {
@@ -978,6 +1047,7 @@ try {
   $script:focusFallbackDetail = $null
   switch ([string]$request.op) {
     'windows' { $result = Invoke-OpWindows }
+    'metrics' { $result = Invoke-OpMetrics }
     'apps' { $result = Invoke-OpApps }
     'snapshot' { $result = Invoke-OpSnapshot $opArgs }
     'shot' { $result = Invoke-OpShot $opArgs }
