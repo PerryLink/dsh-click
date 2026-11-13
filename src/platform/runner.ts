@@ -24,6 +24,8 @@ import {
   expectString,
   type ActionOutcome,
   type AppInfo,
+  type CaptureMethod,
+  type CaptureScope,
   type ClickRequest,
   type DesktopBackend,
   type ElementInfo,
@@ -34,6 +36,7 @@ import {
   type PixelHint,
   type Rect,
   type Screenshot,
+  type ScreenScope,
   type ScrollRequest,
   type Tree,
   type WindowInfo,
@@ -78,12 +81,20 @@ function expectWindow(value: unknown, op: string): WindowInfo {
   if (executablePath !== null && typeof executablePath !== 'string') {
     throw new DshClickError(`helper "${op}" returned malformed executablePath`, 'BAD_HELPER_RESPONSE')
   }
+  const minimized = record['minimized'] === true
+  const rectValue = record['rect']
+  // A minimized window must not carry a rectangle: Windows reports the
+  // CW_USEDEFAULT placeholder (-32000,-32000) while iconified.
+  if (rectValue !== null && minimized) {
+    throw new DshClickError(`helper "${op}" returned a rect for a minimized window`, 'BAD_HELPER_RESPONSE')
+  }
   return {
     windowId: expectNumber(record, 'windowId', op),
     processId,
     title: expectString(record, 'title', op),
     className: expectString(record, 'className', op),
-    rect: expectRect(record['rect'], op),
+    rect: rectValue === null ? null : expectRect(rectValue, op),
+    minimized,
     executablePath,
     visible: record['visible'] !== false,
   }
@@ -108,6 +119,24 @@ function expectSnapshot(value: unknown, op: string): WindowSnapshot {
     shotHash: expectString(record, 'shotHash', op),
     elementCount: expectNumber(record, 'elementCount', op),
   }
+}
+
+/** Validate the helper's capture-path report. */
+function expectCaptureMethod(record: Record<string, unknown>, op: string): CaptureMethod {
+  const value = expectString(record, 'captureMethod', op)
+  if (value !== 'printwindow-fullcontent' && value !== 'printwindow' && value !== 'copyfromscreen') {
+    throw new DshClickError(`helper "${op}" returned an unknown captureMethod`, 'BAD_HELPER_RESPONSE')
+  }
+  return value
+}
+
+/** Validate the helper's capture-scope report. */
+function expectCaptureScope(record: Record<string, unknown>, op: string): CaptureScope {
+  const value = expectString(record, 'scope', op)
+  if (value !== 'window' && value !== 'primary' && value !== 'virtual') {
+    throw new DshClickError(`helper "${op}" returned an unknown scope`, 'BAD_HELPER_RESPONSE')
+  }
+  return value
 }
 
 /** Validate one helper element record. */
@@ -256,10 +285,11 @@ export class HelperBackend implements DesktopBackend {
     return result.map(item => expectWindow(item, 'windows'))
   }
 
-  async shot(ref: WindowRef, maxSide: number, signal?: AbortSignal): Promise<Screenshot> {
+  async shot(ref: WindowRef, maxSide: number, scope: ScreenScope, signal?: AbortSignal): Promise<Screenshot> {
     const result = await this.invoke('shot', {
       target: ref,
       maxSide,
+      scope,
       maxElements: this.config.maxElements,
       maxDepth: this.config.maxTreeDepth,
     }, signal)
@@ -268,6 +298,8 @@ export class HelperBackend implements DesktopBackend {
       pngBase64: expectString(record, 'pngBase64', 'shot'),
       width: expectNumber(record, 'width', 'shot'),
       height: expectNumber(record, 'height', 'shot'),
+      captureMethod: expectCaptureMethod(record, 'shot'),
+      scope: expectCaptureScope(record, 'shot'),
       snapshot: expectSnapshot(record['snapshot'], 'shot'),
     }
   }

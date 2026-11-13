@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **`captureMethod` and `scope` on `screen_shot` results.** `captureMethod` names the path that produced the pixels (`printwindow-fullcontent` / `printwindow` / `copyfromscreen`), and `scope` says what was captured (`window` / `primary` / `virtual`). `scope: "virtual"` captures the whole virtual desktop (`SM_XVIRTUALSCREEN` family); it is opt-in, defaults to `primary`, and is marked experimental because the multi-monitor/negative-origin path is not fully verified.
+- **Minimized windows are reported honestly.** `app_list` marks them `minimized: true` and omits `rect` (Windows reports the `-32000` placeholder rectangle while iconified), and `screen_shot` / `screen_read` refuse them with `WINDOW_MINIMIZED` instead of capturing a broken frame.
+
+### Fixed
+
+- **Window screenshots no longer depend on occlusion (the main #6/#35 bug).** The helper now tries `PrintWindow(hwnd, hdc, PW_RENDERFULLCONTENT)` first, falls back to `PrintWindow(0)`, and only then to `CopyFromScreen`. A captured frame is rejected as blank by sampled checks on the 40px-inset 16x16 grid (quantized colour count and luminance standard deviation) plus a 99%-dark test on a 32x32 full-frame grid. Measured on Windows 11: a fully covered Explorer window produced byte-identical `PrintWindow(2)` frames across two different occluders, while `CopyFromScreen` captured the occluder and changed between runs. The colour-count rule is applied only to the no-flag fallback: a legitimate all-white Chrome page measured 3 quantized colours with a luminance sd of 9.6, so applying that rule to `PrintWindow(2)` would reject valid frames.
+- **One target resolver for `snapshot` / `tree` / `shot`.** `snapshot` used to read only `args.windowId`, so `{"op":"snapshot","args":{"target":{"windowId":N}}}` silently reported the foreground window. All three now read `args.target`, with the legacy top-level `windowId` kept as a fallback. A `snapshot` with neither fails with `NO_TARGET` instead of guessing.
+- **`shot` without a target documents and reports the primary screen**, not the foreground window; `screen_read` keeps the foreground default because it is a tree walk.
+- **A window capture and its `shotHash` now come from one frame.** The hash used to be computed from a second capture, which could disagree with the shipped image and with the capture path that was reported.
+
 ## [0.3.28] - 2026-11-13
 
 ### Fixed
@@ -78,8 +92,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Correct the release date in the previous section, which was stamped with the literal string `undefined` by the release stamper. No content or behaviour change; the version is bumped only because npm will not republish an existing version.
 
-
-## [Unreleased]
 
 ## [0.3.17] - 2026-10-04
 

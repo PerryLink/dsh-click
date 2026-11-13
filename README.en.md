@@ -97,11 +97,11 @@ Every PerryLink plugin is listed in the built-in DSH Desktop market: **Market �
 
 `dsh-click` splits the native desktop into an auditable observation face and action face:
 
-- **`screen_shot`** — captures a window (or the primary screen) and downscales it to `maxScreenshotSide`. With a vision-capable model the result carries the image; text-only models get a text description and keep working.
+- **`screen_shot`** — captures a window (or the primary screen) and downscales it to `maxScreenshotSide`. Window captures take `PrintWindow(PW_RENDERFULLCONTENT)` first, so they do not depend on other windows stacked on top; `captureMethod` reports the path that actually produced the pixels. With a vision-capable model the result carries the image; text-only models get a text description and keep working.
 - **`screen_read`** — the structured observation: the accessibility tree (element ids, types, names, rectangles, supported patterns) plus pixel-location hints with colors — plain text, no image model required.
 - **`screen_find`** — for applications that expose no accessibility tree, finds clickable text or a described visual target via optional OCR (`ocr.*`, tesseract probed at mount) or visual grounding, returning screen coordinates plus an `observationId`; read-only, never needs approval.
 - **`click` / `type` / `scroll` / `key`** — window-scoped actions addressed by element id or coordinates. Delivery prefers UIA invoke, falls back to posted window messages, and never steals foreground focus by default; `type` takes the UIA `ValuePattern` fast path and otherwise injects real keystrokes through `SendInput` (CJK-safe); `key` reports honestly when an app ignores posted input.
-- **`app_list` / `app_launch`** — enumerate running applications and their visible windows; launch one by name or executable path.
+- **`app_list` / `app_launch`** — enumerate running applications and their visible windows (minimized windows carry `minimized: true` and no `rect`); launch one by name or executable path.
 
 Every mutating action crosses one shared safety boundary:
 
@@ -132,6 +132,15 @@ model                           harness
 | `key` | | ✅ | Posted key combinations (`"Ctrl+S"`); apps that ignore posted input refuse loudly |
 | `app_list` | ✅ | — | Running applications and their visible windows |
 | `app_launch` | | ✅ | By name or executable path, with optional arguments |
+
+### Screenshots and coordinate space
+
+- **A target means a window capture; no target means the primary screen** (`snapshot.windowId = 0`, `title = "primary screen"`), not the foreground window. For the whole virtual desktop (multiple monitors, negative origins) pass `scope: "virtual"`; that mode is marked **experimental** and its multi-monitor geometry is not fully verified yet.
+- **Window captures try `PrintWindow(hwnd, hdc, PW_RENDERFULLCONTENT)` first**: the window paints itself, so the image does not depend on what is stacked on top. On failure or a blank frame the helper falls back to `PrintWindow(0)` and then to `CopyFromScreen`. `captureMethod` (`printwindow-fullcontent` / `printwindow` / `copyfromscreen`) says which path produced the image.
+- **`width` / `height` are the bitmap size, not the window size**: they are already downscaled to `maxScreenshotSide`, while `snapshot.rect` is always the physical window (or screen) rectangle. Map with `bitmapX = (screenX - rect.x) * width / rect.width`.
+- **Every rectangle is in physical pixels**: DPI awareness is set when the helper starts (Per-Monitor V2), and `app_list`, `screen_read`, `screen_shot`, and `click` share one coordinate space.
+- **Minimized windows**: `app_list` marks them `minimized: true` and returns no `rect` (Windows reports the `-32000` placeholder rect while iconified); `screen_shot` / `screen_read` fail with `WINDOW_MINIMIZED`, so restore the window first.
+
 
 ### Examples
 

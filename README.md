@@ -97,11 +97,11 @@ dsh plugin --profile <name> add dsh-click
 
 `dsh-click` 把原生桌面拆成可审计的观察面与动作面：
 
-- **`screen_shot`** —— 截取窗口（或主屏幕），按 `maxScreenshotSide` 缩放。模型支持图像时结果附带图片；纯文本模型则得到文字描述，照常可用。
+- **`screen_shot`** —— 截取窗口（或主屏幕），按 `maxScreenshotSide` 缩放。窗口截图优先走 `PrintWindow(PW_RENDERFULLCONTENT)`，不受其它窗口遮挡影响；结果里的 `captureMethod` 写明实际路径。模型支持图像时结果附带图片；纯文本模型则得到文字描述，照常可用。
 - **`screen_read`** —— 结构化观察：无障碍树（元素 id、类型、名称、矩形、支持的模式）加像素位置提示与颜色 —— 纯文本，无需图像模型。
 - **`screen_find`** —— 对没有无障碍树的应用，用可选 OCR（`ocr.*`，挂载时探测 tesseract）或视觉 grounding 按文字/描述找可点目标，返回屏幕坐标与 `observationId`；只读，不需要审批。
 - **`click` / `type` / `scroll` / `key`** —— 以元素 id 或坐标寻址的窗口级操作。优先 UIA invoke，回退到 post 窗口消息，且默认绝不抢占前台焦点；`type` 走 UIA `ValuePattern` 快路径，失败再用 `SendInput` 注入真实按键（CJK 安全）；`key` 对忽略 post 输入的应用会大声拒绝。
-- **`app_list` / `app_launch`** —— 枚举运行中的应用及其可见窗口；按名称或可执行路径启动应用。
+- **`app_list` / `app_launch`** —— 枚举运行中的应用及其可见窗口（最小化窗口标 `minimized: true` 且不返回 `rect`）；按名称或可执行路径启动应用。
 
 每个变更性操作都穿过同一条安全边界：
 
@@ -132,6 +132,15 @@ dsh plugin --profile <name> add dsh-click
 | `key` | | ✅ | post 按键组合（`"Ctrl+S"`）；忽略 post 输入的应用会大声拒绝 |
 | `app_list` | ✅ | — | 运行中的应用及其可见窗口 |
 | `app_launch` | | ✅ | 按名称或可执行路径启动，可带参数 |
+
+### 截图与坐标空间
+
+- **带 `target` 才是窗口截图；不带 `target` 抓的是主屏**（`snapshot.windowId = 0`、`title = "primary screen"`），不是前台窗口。要整个虚拟桌面（多屏，含负坐标）请传 `scope: "virtual"`；该模式标注为**实验性**，多屏几何尚未完整验证。
+- **窗口截图先走 `PrintWindow(hwnd, hdc, PW_RENDERFULLCONTENT)`**：窗口自己绘制，不受其它窗口遮挡影响；失败或空图时依次回退 `PrintWindow(0)` 与 `CopyFromScreen`。结果里的 `captureMethod` 为 `printwindow-fullcontent` / `printwindow` / `copyfromscreen`，直接说明这张图是怎么来的。
+- **`width` / `height` 是位图尺寸，不是窗口尺寸**：它们已被 `maxScreenshotSide` 下采样；`snapshot.rect` 始终是物理像素的窗口（或屏幕）矩形。换算方式：`bitmapX = (screenX - rect.x) * width / rect.width`。
+- **所有矩形都是物理像素**：DPI 感知在 helper 启动时设置（Per-Monitor V2），`app_list`、`screen_read`、`screen_shot` 与 `click` 共用同一坐标空间。
+- **最小化窗口**：`app_list` 标记 `minimized: true` 并且不返回 `rect`（Windows 在最小化时给的是 `-32000` 占位矩形）；`screen_shot` / `screen_read` 对它明确报 `WINDOW_MINIMIZED`，请先还原窗口。
+
 
 ### 示例
 

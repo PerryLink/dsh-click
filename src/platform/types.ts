@@ -30,6 +30,23 @@ export interface WindowRef {
   processId?: number
 }
 
+/** Which screen region a target-less capture covers. */
+export type ScreenScope = 'primary' | 'virtual'
+
+/** What a capture actually covered: one window, the primary screen, or the virtual desktop. */
+export type CaptureScope = 'window' | ScreenScope
+
+/**
+ * Which helper path produced the pixels.
+ *
+ * `printwindow-fullcontent` is `PrintWindow(hwnd, hdc, PW_RENDERFULLCONTENT)`:
+ * the window paints itself, so the image does not depend on what is stacked on
+ * top of it. `printwindow` is the legacy flag-0 call (some old windows only
+ * paint through it). `copyfromscreen` is the last-resort screen-region copy and
+ * is only correct while the window is unobscured.
+ */
+export type CaptureMethod = 'printwindow-fullcontent' | 'printwindow' | 'copyfromscreen'
+
 /** Screen-space rectangle, integer pixel coordinates. */
 export interface Rect {
   x: number
@@ -44,7 +61,14 @@ export interface WindowInfo {
   processId: number | null
   title: string
   className: string
-  rect: Rect
+  /**
+   * Physical screen rectangle, or `null` for a minimized window: Windows reports
+   * the `CW_USEDEFAULT` placeholder (`-32000,-32000 314x50`) while iconified,
+   * which must never reach coordinate math.
+   */
+  rect: Rect | null
+  /** True while the window is iconified (`IsIconic`); such a window cannot be captured. */
+  minimized: boolean
   executablePath: string | null
   visible: boolean
 }
@@ -101,8 +125,18 @@ export interface WindowSnapshot {
 export interface Screenshot {
   /** PNG bytes, base64-encoded. */
   pngBase64: string
+  /**
+   * Bitmap width after the `maxSide` downscale. This is NOT the window width:
+   * `snapshot.rect` always carries the physical window/screen rectangle, so a
+   * screen-to-bitmap mapping is `bitmapX = (screenX - rect.x) * width / rect.width`.
+   */
   width: number
+  /** Bitmap height after the `maxSide` downscale (see {@link width}). */
   height: number
+  /** Which capture path produced the pixels. */
+  captureMethod: CaptureMethod
+  /** What was captured. `virtual` is experimental (multi-monitor geometry untested). */
+  scope: CaptureScope
   snapshot: WindowSnapshot
 }
 
@@ -190,8 +224,12 @@ export interface DesktopBackend {
 
   /** List every visible top-level window across running applications. */
   listWindows(signal?: AbortSignal): Promise<WindowInfo[]>
-  /** Capture a screenshot of the addressed window (or the primary screen). */
-  shot(ref: WindowRef, maxSide: number, signal?: AbortSignal): Promise<Screenshot>
+  /**
+   * Capture a screenshot of the addressed window, or of a screen region when
+   * the ref names no window (the helper never substitutes the foreground
+   * window here; the primary screen is the target-less default).
+   */
+  shot(ref: WindowRef, maxSide: number, scope: ScreenScope, signal?: AbortSignal): Promise<Screenshot>
   /** Read the accessibility tree plus pixel hints of the addressed window. */
   tree(ref: WindowRef, maxElements: number, maxDepth: number, includePixels: boolean, signal?: AbortSignal): Promise<Tree>
   /** Re-capture fresh identity + hashes for one window (the stale check). */
