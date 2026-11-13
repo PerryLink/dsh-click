@@ -97,11 +97,11 @@ Todo plugin PerryLink está listado no mercado integrado do DSH Desktop: **Marke
 
 O `dsh-click` separa o desktop nativo numa face de observação e noutra de ação, ambas auditáveis:
 
-- **`screen_shot`** — captura uma janela (ou a tela principal) e a reduz para `maxScreenshotSide`. Com um modelo que aceita imagens o resultado leva a imagem; modelos só de texto recebem uma descrição textual e continuam funcionando.
+- **`screen_shot`** — captura uma janela (ou a tela principal) e a reduz para `maxScreenshotSide`. Capturas de janela usam primeiro `PrintWindow(PW_RENDERFULLCONTENT)`, sem depender de outras janelas sobrepostas; `captureMethod` informa o caminho que produziu os píxeis. Com um modelo que aceita imagens o resultado leva a imagem; modelos só de texto recebem uma descrição textual e continuam funcionando.
 - **`screen_read`** — a observação estruturada: a árvore de acessibilidade (ids de elemento, tipos, nomes, retângulos, padrões suportados) mais dicas de posição de píxeis com cores; texto puro, sem precisar de modelo de imagem.
 - **`screen_find`** — para aplicações sem árvore de acessibilidade, encontra texto clicável ou um alvo visual descrito via OCR opcional (`ocr.*`, tesseract sondado ao montar) ou grounding visual, devolvendo coordenadas de tela mais um `observationId`; é só leitura e nunca pede aprovação.
 - **`click` / `type` / `scroll` / `key`** — ações com escopo de janela endereçadas por id de elemento ou coordenadas. A entrega prefere invocação UIA e recorre a mensagens de janela postadas, e por padrão nunca rouba o foco de primeiro plano; `type` usa o caminho rápido `ValuePattern` do UIA e, se falhar, injeta teclas reais via `SendInput` (seguro para CJK); `key` reporta com honestidade quando uma app ignora a entrada postada.
-- **`app_list` / `app_launch`** — enumera aplicações em execução e as suas janelas visíveis; lança uma por nome ou caminho do executável.
+- **`app_list` / `app_launch`** — enumera aplicações em execução e as suas janelas visíveis (as minimizadas levam `minimized: true` e não trazem `rect`); lança uma por nome ou caminho do executável.
 
 Toda ação mutante cruza a mesma fronteira de segurança:
 
@@ -132,6 +132,15 @@ modelo                          harness
 | `key` | | ✅ | Combinações de teclas postadas (`"Ctrl+S"`); apps que ignoram a entrada postada são recusadas em voz alta |
 | `app_list` | ✅ | — | Aplicações em execução e as suas janelas visíveis |
 | `app_launch` | | ✅ | Por nome ou caminho do executável, com argumentos opcionais |
+
+### Capturas e espaço de coordenadas
+
+- **Com `target` captura-se uma janela; sem `target` captura-se a tela principal** (`snapshot.windowId = 0`, `title = "primary screen"`), não a janela em primeiro plano. Para todo o desktop virtual (vários monitores, com origem negativa) passe `scope: "virtual"`; esse modo está marcado como **experimental** e a geometria multimonitor ainda não está totalmente verificada.
+- **A captura de janela tenta primeiro `PrintWindow(hwnd, hdc, PW_RENDERFULLCONTENT)`**: a janela desenha-se a si mesma, pelo que a imagem não depende do que está por cima. Se falhar ou vier em branco, o helper recua para `PrintWindow(0)` e depois para `CopyFromScreen`. `captureMethod` (`printwindow-fullcontent` / `printwindow` / `copyfromscreen`) diz qual caminho produziu a imagem.
+- **`width` / `height` são o tamanho do bitmap, não o da janela**: já vêm reduzidos a `maxScreenshotSide`, enquanto `snapshot.rect` é sempre o retângulo físico da janela (ou da tela). Conversão: `bitmapX = (screenX - rect.x) * width / rect.width`.
+- **Todos os retângulos estão em píxeis físicos**: a consciência de DPI é definida quando o helper arranca (Per-Monitor V2), e `app_list`, `screen_read`, `screen_shot` e `click` partilham o mesmo espaço de coordenadas.
+- **Janelas minimizadas**: `app_list` marca-as com `minimized: true` e não devolve `rect` (o Windows dá o retângulo marcador `-32000` enquanto minimizadas); `screen_shot` / `screen_read` falham com `WINDOW_MINIMIZED`; restaure a janela primeiro.
+
 
 ### Exemplos
 

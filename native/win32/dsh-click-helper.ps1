@@ -1,4 +1,4 @@
-﻿# dsh-click native helper (Windows PowerShell 5.1).
+# dsh-click native helper (Windows PowerShell 5.1).
 #
 # One request = one process: JSON request on stdin, JSON response on stdout
 # (exit code 0 even for handled failures; the error envelope is the response).
@@ -6,7 +6,8 @@
 # any other stream, and nothing here steals foreground focus unless the
 # `focusFallback` flag is explicitly true (config-gated, approval-gated).
 #
-# Operations: windows, apps, shot, tree, snapshot, click, type, scroll, key, launch.
+# Operations: windows, apps, metrics, shot, tree, snapshot, click, type, scroll,
+# key, launch.
 # The helper is NOT a security boundary by itself - the harness-side
 # freshness check, approval gate, and process-identity check are. This file
 # only refuses to invent global input: actions address one window by handle.
@@ -149,6 +150,13 @@ public static class DshClickWin32 {
 
   [DllImport("user32.dll")]
   public static extern int GetSystemMetrics(int index);
+
+  // PrintWindow: ask a window to paint itself into a DC. Flag 2 is
+  // PW_RENDERFULLCONTENT (Windows 8.1+), which makes DWM/DirectComposition
+  // windows render their real content instead of a blank or chrome-only
+  // frame; flag 0 is the legacy path for windows that ignore the newer flag.
+  [DllImport("user32.dll", SetLastError = true)]
+  public static extern bool PrintWindow(IntPtr hWnd, IntPtr hdcBlt, uint nFlags);
 
   // DPI awareness. The helper is hosted by powershell.exe, whose manifest
   // declares no DPI awareness, so GetWindowRect/GetSystemMetrics/GetClientRect
@@ -346,8 +354,9 @@ function Resolve-Window($target) {
   $hwnd = ConvertTo-Hwnd $target.windowId
   if ($hwnd -ne [IntPtr]::Zero) {
     $rect = Get-WindowRectInfo $hwnd
-    if ($rect.width -le 0 -and $rect.height -le 0) {
+    if ($rect.width -le 0 -or $rect.height -le 0) {
       # A handle that no longer resolves to a window.
+      $script:ErrorCode = 'WINDOW_NOT_FOUND'
       throw "window $($target.windowId) not found"
     }
     return $hwnd
@@ -357,6 +366,7 @@ function Resolve-Window($target) {
     foreach ($candidate in [DshClickWin32]::EnumVisibleWindows()) {
       if ([DshClickWin32]::WindowTitle($candidate) -like "*$title*") { return $candidate }
     }
+    $script:ErrorCode = 'WINDOW_NOT_FOUND'
     throw "no visible window matches title '$title'"
   }
   $processId = $target.processId
@@ -366,11 +376,39 @@ function Resolve-Window($target) {
       [void][DshClickWin32]::GetWindowThreadProcessId($candidate, [ref]$pidValue)
       if ([int]$pidValue -eq [int]$processId) { return $candidate }
     }
+    $script:ErrorCode = 'WINDOW_NOT_FOUND'
     throw "no visible window owned by process $processId"
   }
   $foreground = [DshClickWin32]::GetForegroundWindow()
-  if ($foreground -eq [IntPtr]::Zero) { throw 'no foreground window and no target given' }
+  if ($foreground -eq [IntPtr]::Zero) {
+    $script:ErrorCode = 'WINDOW_NOT_FOUND'
+    throw 'no foreground window and no target given'
+  }
   return $foreground
+}
+
+# One target resolver for the observer ops. `tree`/`shot` always read
+# `args.target`; `snapshot` historically read `args.windowId`. Both spellings
+# now go through here, so `{"op":"snapshot","args":{"target":{"windowId":N}}}`
+# addresses window N instead of silently falling back to the foreground window.
+# `args.target` wins when both are present; the legacy top-level `windowId` is
+# only a fallback, so old callers keep working.
+function Resolve-OpTarget($opArgs) {
+  $target = @{}
+  if ($opArgs.target -ne $null) {
+    $candidate = $opArgs.target
+    if ($candidate.windowId -ne $null) { $target.windowId = $candidate.windowId }
+    if ($candidate.windowTitle -ne $null) { $target.windowTitle = $candidate.windowTitle }
+    if ($candidate.processId -ne $null) { $target.processId = $candidate.processId }
+  }
+  if ($target.windowId -eq $null -and $target.windowTitle -eq $null -and $target.processId -eq $null) {
+    if ($opArgs.windowId -ne $null) { $target.windowId = $opArgs.windowId }
+  }
+  return $target
+}
+
+function Test-TargetPresent($target) {
+  return ($target.windowId -ne $null) -or ($target.windowTitle -ne $null) -or ($target.processId -ne $null)
 }
 
 # ---------------------------------------------------------------------------
@@ -458,30 +496,214 @@ function Get-TreeHashText($nodes) {
 # ---------------------------------------------------------------------------
 # Screenshot.
 # ---------------------------------------------------------------------------
-function Get-WindowBitmap($hwnd) {
-  $rectInfo = Get-WindowRectInfo $hwnd
-  if ($rectInfo.width -le 0 -or $rectInfo.height -le 0) { throw "window $hwnd has no drawable rect" }
-  $bitmap = New-Object System.Drawing.Bitmap($rectInfo.width, $rectInfo.height)
+# A window is captured in three steps, best first:
+#   1. PrintWindow(hwnd, hdc, 2)  PW_RENDERFULLCONTENT - the window paints its
+#      own content, so identity and pixels do not depend on occlusion/Z-order.
+#   2. PrintWindow(hwnd, hdc, 0)  legacy windows that ignore the newer flag.
+#   3. CopyFromScreen             last resort; correct only while unobscured.
+# PrintWindow reports success for frames that carry no content at all (a blank
+# Electron frame, or a Chromium window that paints only its title-bar buttons),
+# so every candidate goes through Test-BitmapLooksBlank before it is accepted.
+# Measured on Windows 11: PW(2) carries content for WinUI3/Electron/Chromium;
+# PW(0/1) is blank or chrome-only for the latter two. The thresholds below are
+# fitted to that matrix: a pure-color check alone is fooled by a gray frame with
+# three title-bar buttons, so the color-count floor is 6 quantized colors.
+$script:CaptureInset = 40       # px trimmed from each edge before sampling
+$script:CaptureGrid = 16        # interior sample grid (16x16)
+$script:CaptureDarkGrid = 32    # full-frame sample grid for the dark-ratio test
+
+function Get-BitmapLuminance($color) {
+  return (0.299 * [double]$color.R) + (0.587 * [double]$color.G) + (0.114 * [double]$color.B)
+}
+
+# True when a captured frame carries no usable content: a flat interior, an
+# almost entirely black frame, or (on the no-flag PrintWindow path only) a few
+# flat colors with chrome painted in a corner.
+#
+# The color-count rule is `strict` because a legitimate all-white page can also
+# sample as 3 quantized colors: measured on a 2582x1550 Chrome new-tab window,
+# PrintWindow(2) gives 3 colors but a luminance sd of 9.6, while the chrome-only
+# frame the no-flag path paints on Chromium gives 4-5 colors with sd 13-14. The
+# two are indistinguishable by color count alone, so the count rule is applied
+# only where chrome-only frames are known to come from (PrintWindow flag 0).
+# A blank all-black frame is caught on every path by the sd/dark-ratio rules.
+function Test-BitmapLooksBlank($bitmap, $strict) {
+  if ($null -eq $bitmap -or $bitmap.Width -le 0 -or $bitmap.Height -le 0) { return $true }
+  $width = $bitmap.Width
+  $height = $bitmap.Height
+
+  # Interior region: drop the outer band (border, shadow, title-bar buttons)
+  # where a failed PrintWindow can still paint a plausible-looking frame.
+  $insetX = [Math]::Min($script:CaptureInset, [int][Math]::Floor(($width - 1) / 2))
+  $insetY = [Math]::Min($script:CaptureInset, [int][Math]::Floor(($height - 1) / 2))
+  $left = $insetX
+  $top = $insetY
+  $right = $width - 1 - $insetX
+  $bottom = $height - 1 - $insetY
+  if (($right - $left) -lt 8 -or ($bottom - $top) -lt 8) {
+    # Tiny window: the inset leaves nothing to sample, so use the full frame.
+    $left = 0; $top = 0; $right = $width - 1; $bottom = $height - 1
+  }
+  $spanX = [Math]::Max(1, $right - $left)
+  $spanY = [Math]::Max(1, $bottom - $top)
+  $stepX = [Math]::Max(1, [int][Math]::Ceiling($spanX / $script:CaptureGrid))
+  $stepY = [Math]::Max(1, [int][Math]::Ceiling($spanY / $script:CaptureGrid))
+
+  $colors = @{}
+  $sum = 0.0
+  $sumSquares = 0.0
+  $count = 0
+  for ($x = $left; $x -le $right; $x += $stepX) {
+    for ($y = $top; $y -le $bottom; $y += $stepY) {
+      $color = $bitmap.GetPixel($x, $y)
+      # 5-bit quantization: UI colors cluster, and an exact ARGB count is both
+      # noisy and slower than needed for a blank/non-blank verdict.
+      $key = ([int]($color.R -band 0xF8) -shl 16) -bor ([int]($color.G -band 0xF8) -shl 8) -bor [int]($color.B -band 0xF8)
+      $colors[$key] = $true
+      $luminance = Get-BitmapLuminance $color
+      $sum += $luminance
+      $sumSquares += $luminance * $luminance
+      $count += 1
+    }
+  }
+  if ($count -eq 0) { return $true }
+  $mean = $sum / $count
+  $variance = [Math]::Max(0.0, ($sumSquares / $count) - ($mean * $mean))
+  $deviation = [Math]::Sqrt($variance)
+  if ($deviation -lt 2) { return $true }
+  if ($strict -and $colors.Count -le 6) { return $true }
+
+  # Full-frame dark ratio: a PrintWindow frame that painted nothing at all.
+  $dark = 0
+  $samples = 0
+  $darkStepX = [Math]::Max(1, [int][Math]::Ceiling($width / $script:CaptureDarkGrid))
+  $darkStepY = [Math]::Max(1, [int][Math]::Ceiling($height / $script:CaptureDarkGrid))
+  for ($x = 0; $x -lt $width; $x += $darkStepX) {
+    for ($y = 0; $y -lt $height; $y += $darkStepY) {
+      if ((Get-BitmapLuminance $bitmap.GetPixel($x, $y)) -lt 8) { $dark += 1 }
+      $samples += 1
+    }
+  }
+  if ($samples -gt 0 -and (($dark * 100) -ge (99 * $samples))) { return $true }
+  return $false
+}
+
+function New-CaptureBitmap($width, $height) {
+  if ($width -le 0 -or $height -le 0) { throw "cannot allocate a ${width}x${height} capture bitmap" }
+  return New-Object System.Drawing.Bitmap($width, $height)
+}
+
+# One PrintWindow attempt; returns $null when the API refuses, otherwise the
+# bitmap (which may still be blank - the caller decides).
+function Get-PrintWindowFrame($hwnd, $rectInfo, $flags) {
+  $bitmap = New-CaptureBitmap $rectInfo.width $rectInfo.height
   $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+  $hdc = [IntPtr]::Zero
+  $painted = $false
   try {
-    $graphics.CopyFromScreen($rectInfo.x, $rectInfo.y, 0, 0, (New-Object System.Drawing.Size($rectInfo.width, $rectInfo.height)))
+    $hdc = $graphics.GetHdc()
+    $painted = [DshClickWin32]::PrintWindow($hwnd, $hdc, [uint32]$flags)
+  } catch {
+    $painted = $false
   } finally {
+    if ($hdc -ne [IntPtr]::Zero) {
+      try { $graphics.ReleaseHdc($hdc) } catch { }
+    }
     $graphics.Dispose()
+  }
+  if (-not $painted) {
+    $bitmap.Dispose()
+    return $null
   }
   return $bitmap
 }
 
-function Get-PrimaryBitmap() {
-  $width = [DshClickWin32]::GetSystemMetrics(0)   # SM_CXSCREEN
-  $height = [DshClickWin32]::GetSystemMetrics(1)  # SM_CYSCREEN
-  $bitmap = New-Object System.Drawing.Bitmap($width, $height)
+# Capture one window: returns @{ bitmap; method; rect }. The caller owns the
+# bitmap and must dispose it. Minimized windows are refused up front: IsIconic
+# windows report a placeholder rect, and PrintWindow paints only the small
+# window-icon band even when it answers true, so there is no honest image.
+function Get-WindowCapture($hwnd) {
+  $rectInfo = Get-WindowRectInfo $hwnd
+  if ($rectInfo.width -le 0 -or $rectInfo.height -le 0) {
+    $script:ErrorCode = 'WINDOW_NOT_FOUND'
+    throw "window $hwnd has no drawable rect"
+  }
+  if ([DshClickWin32]::IsIconic($hwnd)) {
+    $script:ErrorCode = 'WINDOW_MINIMIZED'
+    throw "window $hwnd is minimized; a minimized window has no capturable pixels - restore it, then re-observe"
+  }
+
+  $candidate = Get-PrintWindowFrame $hwnd $rectInfo 2   # PW_RENDERFULLCONTENT
+  if ($candidate -ne $null) {
+    if (-not (Test-BitmapLooksBlank $candidate $false)) {
+      return @{ bitmap = $candidate; method = 'printwindow-fullcontent'; rect = $rectInfo }
+    }
+    $candidate.Dispose()
+  }
+  $candidate = Get-PrintWindowFrame $hwnd $rectInfo 0   # legacy PrintWindow
+  if ($candidate -ne $null) {
+    if (-not (Test-BitmapLooksBlank $candidate $true)) {
+      return @{ bitmap = $candidate; method = 'printwindow'; rect = $rectInfo }
+    }
+    $candidate.Dispose()
+  }
+
+  # Screen-region copy: the old path, kept for windows that refuse PrintWindow.
+  $bitmap = New-CaptureBitmap $rectInfo.width $rectInfo.height
   $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
   try {
-    $graphics.CopyFromScreen(0, 0, 0, 0, (New-Object System.Drawing.Size($width, $height)))
+    $graphics.CopyFromScreen($rectInfo.x, $rectInfo.y, 0, 0, (New-Object System.Drawing.Size($rectInfo.width, $rectInfo.height)))
+  } catch {
+    $bitmap.Dispose()
+    throw
   } finally {
     $graphics.Dispose()
   }
-  return $bitmap
+  return @{ bitmap = $bitmap; method = 'copyfromscreen'; rect = $rectInfo }
+}
+
+# Resolve the requested screen rectangle. `virtual` is the whole desktop
+# (negative origins on multi-monitor setups) and stays experimental: only the
+# single-monitor case is covered by the verification runs, and BitBlt across
+# negative virtual-screen coordinates is untested here. If the virtual metrics
+# are unusable, fall back to the primary screen rather than failing the call.
+function Get-ScreenMetrics($scope) {
+  if ($scope -eq 'virtual') {
+    $virtualX = [int][DshClickWin32]::GetSystemMetrics(76)      # SM_XVIRTUALSCREEN
+    $virtualY = [int][DshClickWin32]::GetSystemMetrics(77)      # SM_YVIRTUALSCREEN
+    $virtualWidth = [int][DshClickWin32]::GetSystemMetrics(78)  # SM_CXVIRTUALSCREEN
+    $virtualHeight = [int][DshClickWin32]::GetSystemMetrics(79) # SM_CYVIRTUALSCREEN
+    if ($virtualWidth -gt 0 -and $virtualHeight -gt 0) {
+      return @{ scope = 'virtual'; x = $virtualX; y = $virtualY; width = $virtualWidth; height = $virtualHeight }
+    }
+  }
+  return @{
+    scope = 'primary'; x = 0; y = 0
+    width = [int][DshClickWin32]::GetSystemMetrics(0)   # SM_CXSCREEN
+    height = [int][DshClickWin32]::GetSystemMetrics(1)  # SM_CYSCREEN
+  }
+}
+
+# Capture a screen region: returns @{ bitmap; method; scope; rect }.
+function Get-ScreenCapture($scope) {
+  $metrics = Get-ScreenMetrics $scope
+  if ($metrics.width -le 0 -or $metrics.height -le 0) { throw 'the screen reports no drawable area' }
+  $bitmap = New-CaptureBitmap $metrics.width $metrics.height
+  $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+  try {
+    $graphics.CopyFromScreen($metrics.x, $metrics.y, 0, 0, (New-Object System.Drawing.Size($metrics.width, $metrics.height)))
+  } catch {
+    $bitmap.Dispose()
+    throw
+  } finally {
+    $graphics.Dispose()
+  }
+  return @{
+    bitmap = $bitmap
+    method = 'copyfromscreen'
+    scope = $metrics.scope
+    rect = @{ x = $metrics.x; y = $metrics.y; width = $metrics.width; height = $metrics.height }
+  }
 }
 
 function Resize-BitmapIfNeeded($bitmap, $maxSide) {
@@ -651,12 +873,17 @@ function Invoke-OpWindows {
   foreach ($hwnd in [DshClickWin32]::EnumVisibleWindows()) {
     $pidValue = 0
     [void][DshClickWin32]::GetWindowThreadProcessId($hwnd, [ref]$pidValue)
+    # A minimized window still enumerates, but GetWindowRect then returns the
+    # CW_USEDEFAULT placeholder (-32000,-32000 314x50). Report the state and
+    # suppress the placeholder rect instead of handing it to coordinate math.
+    $minimized = [DshClickWin32]::IsIconic($hwnd)
     $windows += @{
       windowId = [int64]$hwnd
       processId = if ([int]$pidValue -gt 0) { [int]$pidValue } else { $null }
       title = [DshClickWin32]::WindowTitle($hwnd)
       className = [DshClickWin32]::WindowClass($hwnd)
-      rect = (Get-WindowRectInfo $hwnd)
+      rect = if ($minimized) { $null } else { Get-WindowRectInfo $hwnd }
+      minimized = $minimized
       executablePath = $null
       visible = $true
     }
@@ -682,12 +909,14 @@ function Invoke-OpApps {
     $pidInt = [int]$pidValue
     if ($pidInt -le 0) { continue }
     if (-not $byPid.ContainsKey($pidInt)) { $byPid[$pidInt] = @() }
+    $minimized = [DshClickWin32]::IsIconic($hwnd)
     $byPid[$pidInt] += @{
       windowId = [int64]$hwnd
       processId = $pidInt
       title = [DshClickWin32]::WindowTitle($hwnd)
       className = [DshClickWin32]::WindowClass($hwnd)
-      rect = (Get-WindowRectInfo $hwnd)
+      rect = if ($minimized) { $null } else { Get-WindowRectInfo $hwnd }
+      minimized = $minimized
       executablePath = $null
       visible = $true
     }
@@ -712,91 +941,129 @@ function Invoke-OpApps {
   return $apps
 }
 
-function Get-SnapshotRecord($hwnd, $maxElements, $maxDepth) {
-  $facts = Get-ProcessFacts $hwnd
-  $rect = Get-WindowRectInfo $hwnd
-  $foreground = ([DshClickWin32]::GetForegroundWindow() -eq $hwnd)
-  $script:TreeNodes = @()
-  $element = Get-UiaElement $hwnd
-  Walk-UiaTree $element 0 $maxDepth $maxElements $false
-  $treeHash = Get-StringHash (Get-TreeHashText $script:TreeNodes)
-  $bitmap = Get-WindowBitmap $hwnd
-  $shotHash = $null
-  try {
-    $shotHash = Get-BitmapHash $bitmap
-  } finally {
-    $bitmap.Dispose()
+function Get-SnapshotRecord($hwnd, $maxElements, $maxDepth, $capture) {
+  $ownsCapture = $false
+  if ($null -eq $capture) {
+    $capture = Get-WindowCapture $hwnd
+    $ownsCapture = $true
   }
-  return @{
-    windowId = [int64]$hwnd
-    processId = $facts.pid
-    executablePath = $facts.executablePath
-    title = [DshClickWin32]::WindowTitle($hwnd)
-    className = [DshClickWin32]::WindowClass($hwnd)
-    rect = $rect
-    foreground = $foreground
-    treeHash = $treeHash
-    shotHash = $shotHash
-    elementCount = $script:TreeNodes.Count
+  try {
+    $facts = Get-ProcessFacts $hwnd
+    $rect = Get-WindowRectInfo $hwnd
+    $foreground = ([DshClickWin32]::GetForegroundWindow() -eq $hwnd)
+    $script:TreeNodes = @()
+    $element = Get-UiaElement $hwnd
+    Walk-UiaTree $element 0 $maxDepth $maxElements $false
+    $treeHash = Get-StringHash (Get-TreeHashText $script:TreeNodes)
+    # The hash is taken from the same frame the caller will ship as the
+    # screenshot (or compare later), not from a second capture: two captures
+    # can disagree on a busy window and on which capture path succeeded.
+    $shotHash = Get-BitmapHash $capture.bitmap
+    return @{
+      windowId = [int64]$hwnd
+      processId = $facts.pid
+      executablePath = $facts.executablePath
+      title = [DshClickWin32]::WindowTitle($hwnd)
+      className = [DshClickWin32]::WindowClass($hwnd)
+      rect = $rect
+      foreground = $foreground
+      treeHash = $treeHash
+      shotHash = $shotHash
+      elementCount = $script:TreeNodes.Count
+    }
+  } finally {
+    if ($ownsCapture) { $capture.bitmap.Dispose() }
   }
 }
 
 function Invoke-OpSnapshot($opArgs) {
-  $hwnd = Resolve-Window @{ windowId = $opArgs.windowId }
+  $target = Resolve-OpTarget $opArgs
+  if (-not (Test-TargetPresent $target)) {
+    # This used to fall back to the foreground window without saying so, which
+    # reported a different window than the caller asked for. Refuse instead.
+    $script:ErrorCode = 'NO_TARGET'
+    throw 'snapshot requires windowId or target; it never guesses the foreground window'
+  }
+  $hwnd = Resolve-Window $target
   $maxElements = if ($opArgs.maxElements -ne $null) { [int]$opArgs.maxElements } else { 500 }
   $maxDepth = if ($opArgs.maxDepth -ne $null) { [int]$opArgs.maxDepth } else { 32 }
-  return (Get-SnapshotRecord $hwnd $maxElements $maxDepth)
+  $capture = Get-WindowCapture $hwnd
+  try {
+    return (Get-SnapshotRecord $hwnd $maxElements $maxDepth $capture)
+  } finally {
+    $capture.bitmap.Dispose()
+  }
 }
 
 function Invoke-OpShot($opArgs) {
-  $target = if ($opArgs.target -ne $null) { $opArgs.target } else { @{} }
+  $target = Resolve-OpTarget $opArgs
+  $scope = if ($opArgs.scope -ne $null) { [string]$opArgs.scope } else { 'primary' }
+  if ($scope -ne 'primary' -and $scope -ne 'virtual') {
+    $script:ErrorCode = 'INVALID_SCOPE'
+    throw "unknown scope '$scope' (expected 'primary' or 'virtual')"
+  }
   $maxSide = if ($opArgs.maxSide -ne $null) { [int]$opArgs.maxSide } else { 2560 }
   $maxElements = if ($opArgs.maxElements -ne $null) { [int]$opArgs.maxElements } else { 500 }
   $maxDepth = if ($opArgs.maxDepth -ne $null) { [int]$opArgs.maxDepth } else { 32 }
-  $hasTarget = ($target.windowId -ne $null) -or ($target.windowTitle -ne $null) -or ($target.processId -ne $null)
-  if ($hasTarget) {
-    $hwnd = Resolve-Window $target
-    $bitmap = Get-WindowBitmap $hwnd
-    $snapshot = Get-SnapshotRecord $hwnd $maxElements $maxDepth
-  } else {
-    $hwnd = $null
-    $bitmap = Get-PrimaryBitmap
-    $snapshot = @{
-      windowId = 0; processId = 0; executablePath = $null
-      title = 'primary screen'; className = 'Screen'
-      rect = @{ x = 0; y = 0; width = $bitmap.Width; height = $bitmap.Height }
-      foreground = $true; treeHash = ''; shotHash = ''; elementCount = 0
-    }
-  }
+  $capture = $null
+  $bitmap = $null
   try {
-    $bitmap = Resize-BitmapIfNeeded $bitmap $maxSide
+    if (Test-TargetPresent $target) {
+      $hwnd = Resolve-Window $target
+      $capture = Get-WindowCapture $hwnd
+      $captureScope = 'window'
+      $snapshot = Get-SnapshotRecord $hwnd $maxElements $maxDepth $capture
+    } else {
+      # No target means the screen, not the foreground window: the result says
+      # `scope: primary` and its snapshot is titled "primary screen" (windowId 0).
+      $capture = Get-ScreenCapture $scope
+      $captureScope = $capture.scope
+      $snapshot = @{
+        windowId = 0; processId = 0; executablePath = $null
+        title = if ($capture.scope -eq 'virtual') { 'virtual screen' } else { 'primary screen' }
+        className = 'Screen'
+        rect = $capture.rect
+        foreground = $true; treeHash = ''; shotHash = ''; elementCount = 0
+      }
+    }
+    $bitmap = $capture.bitmap
+    if ([Math]::Max($bitmap.Width, $bitmap.Height) -gt $maxSide) {
+      # Resize-BitmapIfNeeded disposes the original; the finally below disposes
+      # whichever bitmap is current, and Dispose is idempotent.
+      $bitmap = Resize-BitmapIfNeeded $capture.bitmap $maxSide
+    }
     $base64 = Get-BitmapBase64 $bitmap
     return @{
       pngBase64 = $base64
       width = $bitmap.Width
       height = $bitmap.Height
+      captureMethod = $capture.method
+      scope = $captureScope
       snapshot = $snapshot
     }
   } finally {
-    $bitmap.Dispose()
+    if ($null -ne $bitmap) { $bitmap.Dispose() }
+    elseif ($null -ne $capture) { $capture.bitmap.Dispose() }
   }
 }
 
 function Invoke-OpTree($opArgs) {
-  $target = if ($opArgs.target -ne $null) { $opArgs.target } else { @{} }
+  $target = Resolve-OpTarget $opArgs
   $maxElements = if ($opArgs.maxElements -ne $null) { [int]$opArgs.maxElements } else { 500 }
   $maxDepth = if ($opArgs.maxDepth -ne $null) { [int]$opArgs.maxDepth } else { 32 }
   $includePixels = if ($opArgs.includePixels -ne $null) { [bool]$opArgs.includePixels } else { $true }
+  # An empty target still means the foreground window here (documented for
+  # screen_read); only `snapshot` refuses the guess.
   $hwnd = Resolve-Window $target
-  $snapshot = Get-SnapshotRecord $hwnd $maxElements $maxDepth
-  $script:TreeNodes = @()
-  $element = Get-UiaElement $hwnd
-  Walk-UiaTree $element 0 $maxDepth $maxElements $includePixels
-  $pixels = @()
-  if ($includePixels) {
-    $bitmap = Get-WindowBitmap $hwnd
-    try {
-      $rectInfo = Get-WindowRectInfo $hwnd
+  $capture = Get-WindowCapture $hwnd
+  try {
+    $snapshot = Get-SnapshotRecord $hwnd $maxElements $maxDepth $capture
+    $script:TreeNodes = @()
+    $element = Get-UiaElement $hwnd
+    Walk-UiaTree $element 0 $maxDepth $maxElements $includePixels
+    $pixels = @()
+    if ($includePixels) {
+      $rectInfo = $capture.rect
       $count = 0
       foreach ($node in $script:TreeNodes) {
         if ($count -ge 200) { break }
@@ -804,21 +1071,21 @@ function Invoke-OpTree($opArgs) {
         if ($r.width -le 0 -or $r.height -le 0) { continue }
         $cx = $r.x + [int]($r.width / 2) - $rectInfo.x
         $cy = $r.y + [int]($r.height / 2) - $rectInfo.y
-        $color = Get-PixelColorText $bitmap $cx $cy
+        $color = Get-PixelColorText $capture.bitmap $cx $cy
         if ($color -ne $null) {
           $label = if ($node.name -ne '') { $node.name } else { "$($node.controlType)[$($node.elementId)]" }
           $pixels += @{ label = $label; x = $r.x + [int]($r.width / 2); y = $r.y + [int]($r.height / 2); color = $color }
           $count += 1
         }
       }
-    } finally {
-      $bitmap.Dispose()
     }
-  }
-  return @{
-    snapshot = $snapshot
-    elements = @($script:TreeNodes)
-    pixels = $pixels
+    return @{
+      snapshot = $snapshot
+      elements = @($script:TreeNodes)
+      pixels = $pixels
+    }
+  } finally {
+    $capture.bitmap.Dispose()
   }
 }
 
@@ -1045,6 +1312,9 @@ try {
   # Per-request focus-fallback verdict (set by Set-DshFocusFallback, consumed by
   # Get-ActionOutcome); one helper process serves exactly one request.
   $script:focusFallbackDetail = $null
+  # Per-request failure code; a plain `throw` still defaults to HELPER_ERROR,
+  # while the capture/scope guards set a precise code for the caller.
+  $script:ErrorCode = $null
   switch ([string]$request.op) {
     'windows' { $result = Invoke-OpWindows }
     'metrics' { $result = Invoke-OpMetrics }
@@ -1064,6 +1334,7 @@ try {
 } catch {
   $message = $_.Exception.Message
   if ($message -eq $null -or $message.Length -eq 0) { $message = 'unknown helper failure' }
-  Write-DshError 'HELPER_ERROR' $message
+  $code = if ($script:ErrorCode -ne $null -and [string]$script:ErrorCode -ne '') { [string]$script:ErrorCode } else { 'HELPER_ERROR' }
+  Write-DshError $code $message
   exit 0
 }

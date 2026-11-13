@@ -94,6 +94,141 @@ describe('HelperBackend request framing', () => {
   })
 })
 
+describe('helper window records', () => {
+  it('parses a minimized window with no rect', async () => {
+    const { backend, subprocess } = makeBackend()
+    subprocess.nextStdout = JSON.stringify({
+      ok: true,
+      result: [{
+        windowId: 42,
+        processId: 7,
+        title: 'Explorer',
+        className: 'CabinetWClass',
+        rect: null,
+        minimized: true,
+        executablePath: null,
+        visible: true,
+      }],
+    })
+    const windows = await backend.listWindows()
+    expect(windows[0]?.minimized).toBe(true)
+    expect(windows[0]?.rect).toBeNull()
+  })
+
+  it('rejects a minimized window that still carries the placeholder rect', async () => {
+    const { backend, subprocess } = makeBackend()
+    subprocess.nextStdout = JSON.stringify({
+      ok: true,
+      result: [{
+        windowId: 42,
+        processId: 7,
+        title: 'Explorer',
+        className: 'CabinetWClass',
+        rect: { x: -32000, y: -32000, width: 314, height: 50 },
+        minimized: true,
+        executablePath: null,
+        visible: true,
+      }],
+    })
+    await expect(backend.listWindows()).rejects.toMatchObject({ code: 'BAD_HELPER_RESPONSE' })
+  })
+})
+
+describe('helper shot records', () => {
+  function shotResult(overrides: Record<string, unknown> = {}): string {
+    return JSON.stringify({
+      ok: true,
+      result: {
+        pngBase64: 'AAA',
+        width: 800,
+        height: 600,
+        captureMethod: 'printwindow-fullcontent',
+        scope: 'window',
+        snapshot: {
+          windowId: 42,
+          processId: 7,
+          executablePath: null,
+          title: 'T',
+          className: 'C',
+          rect: { x: 1, y: 2, width: 3, height: 4 },
+          foreground: false,
+          treeHash: 't',
+          shotHash: 's',
+          elementCount: 0,
+        },
+        ...overrides,
+      },
+    })
+  }
+
+  it('parses captureMethod/scope and forwards the requested scope', async () => {
+    const { backend, subprocess } = makeBackend()
+    subprocess.nextStdout = shotResult()
+    const shot = await backend.shot({ windowId: 42 }, 800, 'virtual')
+    expect(shot.captureMethod).toBe('printwindow-fullcontent')
+    expect(shot.scope).toBe('window')
+    const spec = subprocess.spawns[0]
+    expect(spec).toBeDefined()
+    if (spec === undefined) return
+    const stdin = spec.stdio.stdin
+    if (typeof stdin !== 'object') throw new Error('stdin was not captured')
+    const request = JSON.parse(stdin.data) as { op: string; args: { scope: string; target: unknown } }
+    expect(request.op).toBe('shot')
+    expect(request.args.scope).toBe('virtual')
+    expect(request.args.target).toEqual({ windowId: 42 })
+  })
+
+  it('accepts every documented capture method and screen scope', async () => {
+    for (const captureMethod of ['printwindow-fullcontent', 'printwindow', 'copyfromscreen']) {
+      const { backend, subprocess } = makeBackend()
+      subprocess.nextStdout = shotResult({ captureMethod, scope: 'primary' })
+      const shot = await backend.shot({}, 800, 'primary')
+      expect(shot.captureMethod).toBe(captureMethod)
+      expect(shot.scope).toBe('primary')
+    }
+  })
+
+  it('rejects an unknown captureMethod', async () => {
+    const { backend, subprocess } = makeBackend()
+    subprocess.nextStdout = shotResult({ captureMethod: 'bitblt-magic' })
+    await expect(backend.shot({ windowId: 1 }, 800, 'primary')).rejects.toMatchObject({ code: 'BAD_HELPER_RESPONSE' })
+  })
+
+  it('rejects an unknown capture scope', async () => {
+    const { backend, subprocess } = makeBackend()
+    subprocess.nextStdout = shotResult({ scope: 'secondary' })
+    await expect(backend.shot({ windowId: 1 }, 800, 'primary')).rejects.toMatchObject({ code: 'BAD_HELPER_RESPONSE' })
+  })
+
+  it('still asks for a snapshot by the legacy windowId field', async () => {
+    const { backend, subprocess } = makeBackend()
+    subprocess.nextStdout = JSON.stringify({
+      ok: true,
+      result: {
+        windowId: 42,
+        processId: 7,
+        executablePath: null,
+        title: 'T',
+        className: 'C',
+        rect: { x: 1, y: 2, width: 3, height: 4 },
+        foreground: false,
+        treeHash: 't',
+        shotHash: 's',
+        elementCount: 0,
+      },
+    })
+    await backend.snapshot(42)
+    const spec = subprocess.spawns[0]
+    if (spec === undefined) throw new Error('no spawn')
+    const stdin = spec.stdio.stdin
+    if (typeof stdin !== 'object') throw new Error('stdin was not captured')
+    const request = JSON.parse(stdin.data) as { op: string; args: Record<string, unknown> }
+    expect(request.op).toBe('snapshot')
+    expect(request.args['windowId']).toBe(42)
+    expect(request.args['target']).toBeUndefined()
+  })
+})
+
 describe('UnavailableBackend', () => {
   it('reports its reason and fails closed on every operation', () => {
     const backend = new UnavailableBackend('darwin', 'macOS is reserved')

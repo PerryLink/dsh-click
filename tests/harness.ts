@@ -35,6 +35,7 @@ import {
   type KeyRequest,
   type LaunchOutcome,
   type Screenshot,
+  type ScreenScope,
   type ScrollRequest,
   type Tree,
   type WindowInfo,
@@ -92,14 +93,18 @@ export class FakeDesktopBackend implements DesktopBackend {
   /** Recorded call shapes, for assertions. */
   calls: string[] = []
 
+  /** Recorded screenshot requests (ref, clamp, requested scope). */
+  shotCalls: Array<{ ref: WindowRef; maxSide: number; scope: ScreenScope }> = []
+
   async listWindows(): Promise<WindowInfo[]> {
     this.calls.push('windows')
     if (this.windows instanceof Error) throw this.windows
     return this.windows
   }
 
-  async shot(_ref: WindowRef): Promise<Screenshot> {
+  async shot(ref: WindowRef, maxSide: number, scope: ScreenScope): Promise<Screenshot> {
     this.calls.push('shot')
+    this.shotCalls.push({ ref, maxSide, scope })
     if (this.shotResult instanceof Error) throw this.shotResult
     return this.shotResult
   }

@@ -144,6 +144,8 @@ describe('tool three interfaces', () => {
         pngBase64: Buffer.from('fake-png-bytes').toString('base64'),
         width: 800,
         height: 600,
+        captureMethod: 'printwindow-fullcontent',
+        scope: 'window',
         snapshot: makeSnapshot(),
       }
 

@@ -45,12 +45,14 @@ const fakeBackend = {
   platform: 'win32',
   available: true,
   capturedMaxSide: undefined,
-  async shot(_ref, maxSide, _signal) {
+  async shot(_ref, maxSide, _scope, _signal) {
     this.capturedMaxSide = maxSide
     return {
       pngBase64: Buffer.from('fake-png-bytes').toString('base64'),
       width: 800,
       height: 600,
+      captureMethod: 'printwindow-fullcontent',
+      scope: 'window',
       snapshot: {
         windowId: 42,
         processId: 4242,

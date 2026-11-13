@@ -12,7 +12,7 @@ import type { ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import { describe, expect, it } from 'vitest'
 import { FakeDesktopBackend, makeSnapshot, mountHarness, type Harness } from './harness.ts'
 import { UnavailableBackend } from '../src/platform/selection.ts'
-import type { Screenshot, Tree } from '../src/platform/types.ts'
+import { DshClickError, type Screenshot, type Tree } from '../src/platform/types.ts'
 
 let callCounter = 0
 
@@ -49,12 +49,15 @@ function treeFixture(): Tree {
   }
 }
 
-function shotFixture(): Screenshot {
+function shotFixture(overrides: Partial<Screenshot> = {}): Screenshot {
   return {
     pngBase64: Buffer.from('fake-png-bytes').toString('base64'),
     width: 800,
     height: 600,
+    captureMethod: 'printwindow-fullcontent',
+    scope: 'window',
     snapshot: makeSnapshot(),
+    ...overrides,
   }
 }
 
@@ -150,6 +153,32 @@ describe('screen_shot vision routing', () => {
     expect(result.content.some((block: ContentBlock) => block.type === 'image')).toBe(false)
   })
 
+  it('reports the capture path and forwards the requested screen scope', async () => {
+    const harness = await mountHarness({ attachments: true })
+    const backend = harness.backend as FakeDesktopBackend
+    backend.shotResult = shotFixture({ captureMethod: 'copyfromscreen', scope: 'primary' })
+
+    const result = await callTool(harness, 'screen_shot', { scope: 'virtual' })
+    expect(result.isError).toBe(false)
+    if (result.isError) return
+    const value = result.value as { captureMethod: string; scope: string; description: string }
+    expect(value.captureMethod).toBe('copyfromscreen')
+    expect(value.scope).toBe('primary')
+    expect(backend.shotCalls[0]?.scope).toBe('virtual')
+    // The description separates the downsampled bitmap from the physical rect.
+    expect(value.description).toContain('800x600')
+    expect(value.description).toContain('physical pixels')
+  })
+
+  it('surfaces a minimized-window refusal from the helper', async () => {
+    const harness = await mountHarness()
+    const backend = harness.backend as FakeDesktopBackend
+    backend.shotResult = new DshClickError('window 1 is minimized; restore it, then re-observe', 'WINDOW_MINIMIZED')
+    const result = await callTool(harness, 'screen_shot', { target: { windowId: 1 } })
+    expect(result.isError).toBe(true)
+    if (result.isError) expect(result.error.message).toContain('minimized')
+  })
+
   it('forces text mode when imageMode is "text"', async () => {
     const harness = await mountHarness({ attachments: true, vision: true, config: { imageMode: 'text' } })
     const backend = harness.backend as FakeDesktopBackend
@@ -176,6 +205,7 @@ describe('app_list', () => {
         title: 'Demo App',
         className: 'DemoClass',
         rect: { x: 10, y: 20, width: 800, height: 600 },
+        minimized: false,
         executablePath: 'C:\\Apps\\demo.exe',
         visible: true,
       }],
@@ -186,6 +216,35 @@ describe('app_list', () => {
     if (result.isError) return
     expect((result.value as { apps: unknown[] }).apps).toHaveLength(1)
     expect(result.content.filter((block: ContentBlock) => block.type === 'text').map(block => (block as { text: string }).text).join('\n')).toContain('windowId')
+  })
+
+  it('lists a minimized window with minimized: true and no rect', async () => {
+    const harness = await mountHarness()
+    const backend = harness.backend as FakeDesktopBackend
+    backend.appsResult = [{
+      processId: 4242,
+      name: 'Explorer',
+      executablePath: 'C:\\Windows\\explorer.exe',
+      windows: [{
+        windowId: 7,
+        processId: 4242,
+        title: 'Folder',
+        className: 'CabinetWClass',
+        rect: null,
+        minimized: true,
+        executablePath: 'C:\\Windows\\explorer.exe',
+        visible: true,
+      }],
+    }]
+
+    const result = await callTool(harness, 'app_list', {})
+    expect(result.isError).toBe(false)
+    if (result.isError) return
+    const value = result.value as { apps: Array<{ windows: Array<{ minimized: boolean; rect: unknown }> }> }
+    expect(value.apps[0]?.windows[0]?.minimized).toBe(true)
+    expect(value.apps[0]?.windows[0]?.rect).toBeNull()
+    const text = result.content.filter((block: ContentBlock) => block.type === 'text').map(block => (block as { text: string }).text).join('\n')
+    expect(text).toContain('minimized')
   })
 })
 

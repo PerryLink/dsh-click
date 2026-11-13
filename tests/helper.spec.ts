@@ -28,7 +28,8 @@ describeOnWindows('real PowerShell helper', () => {
       expect(window.windowId).toBeGreaterThan(0)
       expect(typeof window.title).toBe('string')
       expect(typeof window.className).toBe('string')
-      expect(window.rect.width).toBeGreaterThanOrEqual(0)
+      expect(typeof window.minimized).toBe('boolean')
+      expect(window.minimized ? window.rect === null : window.rect !== null).toBe(true)
     }
   }, 120_000)
 })

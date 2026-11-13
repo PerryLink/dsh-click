@@ -97,11 +97,11 @@ Todos los plugins de PerryLink pueden explorarse en el mercado integrado de DSH 
 
 `dsh-click` separa el escritorio nativo en una cara de observación y otra de acción, ambas auditables:
 
-- **`screen_shot`** — captura una ventana (o la pantalla principal) y la escala a `maxScreenshotSide`. Con un modelo capaz de ver imágenes el resultado lleva la imagen; los modelos de solo texto reciben una descripción textual y siguen funcionando.
+- **`screen_shot`** — captura una ventana (o la pantalla principal) y la escala a `maxScreenshotSide`. Las capturas de ventana usan primero `PrintWindow(PW_RENDERFULLCONTENT)`, así que no dependen de otras ventanas superpuestas; `captureMethod` indica la ruta que produjo los píxeles. Con un modelo capaz de ver imágenes el resultado lleva la imagen; los modelos de solo texto reciben una descripción textual y siguen funcionando.
 - **`screen_read`** — la observación estructurada: el árbol de accesibilidad (ids de elemento, tipos, nombres, rectángulos, patrones soportados) más pistas de posición de píxeles con colores; texto plano, sin necesidad de modelo de imagen.
 - **`screen_find`** — para aplicaciones sin árbol de accesibilidad, busca texto clicable o un objetivo visual descrito mediante OCR opcional (`ocr.*`, tesseract sondeado al montar) o grounding visual, y devuelve coordenadas de pantalla más un `observationId`; es de solo lectura y nunca pide aprobación.
 - **`click` / `type` / `scroll` / `key`** — acciones con ámbito de ventana direccionadas por id de elemento o coordenadas. La entrega prefiere la invocación UIA y recurre a mensajes de ventana publicados, y por defecto nunca roba el foco de primer plano; `type` usa la vía rápida `ValuePattern` de UIA y, si falla, inyecta pulsaciones reales con `SendInput` (seguro para CJK); `key` informa con honestidad cuando una app ignora la entrada publicada.
-- **`app_list` / `app_launch`** — enumera las aplicaciones en ejecución y sus ventanas visibles; lanza una por nombre o ruta del ejecutable.
+- **`app_list` / `app_launch`** — enumera las aplicaciones en ejecución y sus ventanas visibles (las minimizadas llevan `minimized: true` y no traen `rect`); lanza una por nombre o ruta del ejecutable.
 
 Toda acción mutante cruza la misma frontera de seguridad:
 
@@ -132,6 +132,15 @@ modelo                          harness
 | `key` | | ✅ | Combinaciones de teclas publicadas (`"Ctrl+S"`); las apps que ignoran la entrada publicada se rechazan en voz alta |
 | `app_list` | ✅ | — | Aplicaciones en ejecución y sus ventanas visibles |
 | `app_launch` | | ✅ | Por nombre o ruta del ejecutable, con argumentos opcionales |
+
+### Capturas y espacio de coordenadas
+
+- **Con `target` se captura una ventana; sin `target` se captura la pantalla principal** (`snapshot.windowId = 0`, `title = "primary screen"`), no la ventana en primer plano. Para todo el escritorio virtual (varios monitores, con origen negativo) pasa `scope: "virtual"`; ese modo está marcado como **experimental** y su geometría multimonitor aún no está verificada por completo.
+- **La captura de ventana prueba primero `PrintWindow(hwnd, hdc, PW_RENDERFULLCONTENT)`**: la ventana se dibuja a sí misma, así que la imagen no depende de lo que haya encima. Si falla o sale en blanco, el helper retrocede a `PrintWindow(0)` y luego a `CopyFromScreen`. `captureMethod` (`printwindow-fullcontent` / `printwindow` / `copyfromscreen`) dice qué ruta produjo la imagen.
+- **`width` / `height` son el tamaño del bitmap, no el de la ventana**: ya vienen reducidos a `maxScreenshotSide`, mientras que `snapshot.rect` es siempre el rectángulo físico de la ventana (o de la pantalla). Conversión: `bitmapX = (screenX - rect.x) * width / rect.width`.
+- **Todos los rectángulos están en píxeles físicos**: la conciencia de DPI se fija al arrancar el helper (Per-Monitor V2), y `app_list`, `screen_read`, `screen_shot` y `click` comparten el mismo espacio de coordenadas.
+- **Ventanas minimizadas**: `app_list` las marca con `minimized: true` y no devuelve `rect` (Windows da el rectángulo comodín `-32000` mientras están minimizadas); `screen_shot` / `screen_read` fallan con `WINDOW_MINIMIZED`; restaura la ventana primero.
+
 
 ### Ejemplos
 

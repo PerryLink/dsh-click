@@ -97,7 +97,8 @@ function observedWindowInfo(info: WindowInfo, maxTextLength: number) {
     processId: info.processId,
     title: sanitizeVisible(info.title, maxTextLength),
     className: sanitizeVisible(info.className, maxTextLength),
-    rect: info.rect,
+    rect: info.rect === null ? null : { ...info.rect },
+    minimized: info.minimized,
     executablePath: info.executablePath === null ? null : sanitizePath(info.executablePath, maxTextLength),
     visible: info.visible,
   }
@@ -137,8 +138,8 @@ function backendGuard(services: ToolServices): void {
 }
 
 /** Plain-text fallback description for a captured screenshot. */
-function shotDescription(window: ObservedWindowValue, width: number, height: number): string {
-  return `${width}x${height} screenshot of ${windowLine(window)}; run screen_read on the same window for the structured element list and pixel positions.`
+function shotDescription(window: ObservedWindowValue, width: number, height: number, captureMethod: string): string {
+  return `${width}x${height} bitmap via ${captureMethod} of ${windowLine(window)}; the bitmap is downscaled to the requested longest side, while the window rectangle is ${window.rect.width}x${window.rect.height} physical pixels (snapshot.rect) - map screen coordinates with rect.width/width. Run screen_read on the same window for the structured element list and pixel positions.`
 }
 
 /**
@@ -155,11 +156,11 @@ export function screenShotTool(services: ToolServices) {
   return defineTool({
     name: 'screen_shot',
     description:
-      'Capture a screenshot of a desktop window (or the primary screen when no window is given). Returns an observationId that later actions cite in `basedOn`. When the current model accepts images the result includes the image; otherwise it includes a text description. Read-only: never needs approval.',
+      'Capture a screenshot of a desktop window, or of the primary screen when no target is given (a target-less shot never captures the foreground window). Window captures ask the window to paint itself with PrintWindow(PW_RENDERFULLCONTENT) first, so they are independent of other windows stacked on top; captureMethod reports which path produced the pixels. Returns an observationId that later actions cite in `basedOn`. When the current model accepts images the result includes the image; otherwise it includes a text description. Read-only: never needs approval.',
     parameters: {
       target: {
         type: 'object',
-        description: 'Which window to capture (windowId, windowTitle, or processId); omitted = the foreground window.',
+        description: 'Which window to capture (windowId, windowTitle, or processId); omitted = the primary screen.',
         properties: {
           windowId: { type: 'integer', description: 'Native window handle from app_list or screen_read.' },
           windowTitle: { type: 'string', description: 'Visible window title (matched case-insensitively by substring).' },
@@ -167,7 +168,12 @@ export function screenShotTool(services: ToolServices) {
         },
         additionalProperties: false,
       },
-      maxSide: { type: 'integer', description: 'Longest side in pixels; larger captures are downscaled.' },
+      scope: {
+        type: 'string',
+        enum: ['primary', 'virtual'] as const,
+        description: 'Only used without a target: capture the primary screen (default) or the whole virtual desktop (experimental - multi-monitor and negative-origin geometry are not fully verified).',
+      },
+      maxSide: { type: 'integer', description: 'Longest side of the bitmap; larger captures are downscaled (the window rectangle in snapshot.rect stays in physical pixels).' },
     },
     output: {
       schema: {
@@ -209,6 +215,11 @@ export function screenShotTool(services: ToolServices) {
             },
             additionalProperties: false,
           },
+          captureMethod: {
+            type: 'string',
+            enum: ['printwindow-fullcontent', 'printwindow', 'copyfromscreen'] as const,
+          },
+          scope: { type: 'string', enum: ['window', 'primary', 'virtual'] as const },
           description: { type: 'string' },
         },
         additionalProperties: false,
@@ -231,13 +242,14 @@ export function screenShotTool(services: ToolServices) {
     timeoutMs: config.helperTimeoutMs + 15_000,
     async execute(args, exec) {
       backendGuard(services)
-      const target = (args as { target?: WindowRef }).target ?? {}
-      const requestedSide = (args as { maxSide?: number }).maxSide
+      const parsed = args as { target?: WindowRef; maxSide?: number; scope?: 'primary' | 'virtual' }
+      const target = parsed.target ?? {}
+      const requestedSide = parsed.maxSide
       const maxSide = requestedSide === undefined ? config.maxScreenshotSide : Math.min(requestedSide, config.maxScreenshotSide)
-      const shot = await backend.shot(target, maxSide, exec.signal)
+      const shot = await backend.shot(target, maxSide, parsed.scope ?? 'primary', exec.signal)
       const sanitized = observedWindow(shot.snapshot, config.maxTextLength)
       const record = observations.record(shot.snapshot)
-      const description = shotDescription(sanitized, shot.width, shot.height)
+      const description = shotDescription(sanitized, shot.width, shot.height, shot.captureMethod)
 
       let image: ImageAttachmentRef | undefined
       const attachments = ctx.get('attachments') as AttachmentStore | undefined
@@ -278,6 +290,8 @@ export function screenShotTool(services: ToolServices) {
         observationId: record.id,
         window: sanitized,
         ...image !== undefined ? { image } : {},
+        captureMethod: shot.captureMethod,
+        scope: shot.scope,
         description,
       }
     },
@@ -457,7 +471,7 @@ export function screenFindTool(services: ToolServices) {
     parameters: {
       target: {
         type: 'object',
-        description: 'Which window to search (windowId, windowTitle, or processId); omitted = the foreground window.',
+        description: 'Which window to search (windowId, windowTitle, or processId); omitted = the primary screen (a target-less capture never uses the foreground window).',
         properties: {
           windowId: { type: 'integer', description: 'Native window handle from app_list.' },
           windowTitle: { type: 'string', description: 'Visible window title (matched case-insensitively by substring).' },
@@ -466,7 +480,7 @@ export function screenFindTool(services: ToolServices) {
         additionalProperties: false,
       },
       query: { type: 'string', description: 'Optional substring to filter OCR text by, or the visual target description for grounding.' },
-      maxSide: { type: 'integer', description: 'Longest side in pixels; larger captures are downscaled.' },
+      maxSide: { type: 'integer', description: 'Longest side of the bitmap; larger captures are downscaled (coordinates returned are still screen pixels).' },
     },
     output: {
       schema: {
@@ -542,7 +556,7 @@ export function screenFindTool(services: ToolServices) {
       const parsed = args as { target?: WindowRef; query?: string; maxSide?: number }
       const requestedSide = parsed.maxSide
       const maxSide = requestedSide === undefined ? config.maxScreenshotSide : Math.min(requestedSide, config.maxScreenshotSide)
-      const shot = await backend.shot(parsed.target ?? {}, maxSide, exec.signal)
+      const shot = await backend.shot(parsed.target ?? {}, maxSide, 'primary', exec.signal)
       const sanitized = observedWindow(shot.snapshot, config.maxTextLength)
       const record = observations.record(shot.snapshot)
 
@@ -883,7 +897,7 @@ export function appListTool(services: ToolServices) {
   return defineTool({
     name: 'app_list',
     description:
-      'List running desktop applications and their visible windows (windowId, title, process id, executable path). Read-only: never needs approval. Use the returned windowIds as screen_shot/screen_read targets.',
+      'List running desktop applications and their visible windows (windowId, title, process id, executable path). Read-only: never needs approval. Use the returned windowIds as screen_shot/screen_read targets. Minimized windows are listed with minimized: true and no rect (Windows reports a -32000 placeholder while iconified); restore them before capturing.',
     parameters: {},
     output: {
       schema: {
@@ -908,15 +922,18 @@ export function appListTool(services: ToolServices) {
                       title: { type: 'string' },
                       className: { type: 'string' },
                       rect: {
-                        type: 'object',
-                        properties: {
-                          x: { type: 'integer' },
-                          y: { type: 'integer' },
-                          width: { type: 'integer' },
-                          height: { type: 'integer' },
-                        },
-                        additionalProperties: false,
+                        oneOf: [{
+                          type: 'object',
+                          properties: {
+                            x: { type: 'integer' },
+                            y: { type: 'integer' },
+                            width: { type: 'integer' },
+                            height: { type: 'integer' },
+                          },
+                          additionalProperties: false,
+                        }, { type: 'null' }],
                       },
+                      minimized: { type: 'boolean' },
                       executablePath: { oneOf: [{ type: 'string' }, { type: 'null' }] },
                       visible: { type: 'boolean' },
                     },
@@ -936,7 +953,12 @@ export function appListTool(services: ToolServices) {
         for (const app of result.apps) {
           lines.push(`- ${app.name} (pid ${app.processId}, ${app.executablePath ?? 'unknown executable'})`)
           for (const window of app.windows) {
-            lines.push(`  - [windowId ${window.windowId}] ${JSON.stringify(window.title)} at (${window.rect.x}, ${window.rect.y}) ${window.rect.width}x${window.rect.height}`)
+            const where = window.minimized
+              ? 'minimized (no rect; screen_shot refuses it until restored)'
+              : window.rect === null
+                ? 'no rect reported'
+                : `at (${window.rect.x}, ${window.rect.y}) ${window.rect.width}x${window.rect.height}`
+            lines.push(`  - [windowId ${window.windowId}] ${JSON.stringify(window.title)} ${where}`)
           }
         }
         return [{ type: 'text', text: lines.join('\n') }]
