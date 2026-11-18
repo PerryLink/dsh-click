@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.3.31] - 2026-11-18
+
 ### Fixed
 
 - **A flat but bright window frame is no longer discarded as blank.** The blank-frame check treated any 16x16 sample with a luminance standard deviation below 2 as empty, so on 200% scaling an unfocused, empty window whose title bar matches its client area (sd 1.66, mean 37.7) was judged blank and fell back to `CopyFromScreen`, which captured whatever covered it — the occlusion bug from #6/#35 returning for flat content. A failed `PrintWindow` frame is flat *and* dark (mean 0, whether transparent or opaque black), so the variance rule now also requires mean < 8; the 99%-dark rule and the colour-count rule for the no-flag fallback are unchanged. Reported with a 12-sample matrix in #35.
