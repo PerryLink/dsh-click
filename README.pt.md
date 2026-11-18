@@ -298,7 +298,7 @@ O `dsh-click` expõe apenas uma superfície de ferramentas e não entra nos seam
 
 | Superfície | Status |
 |---|---|
-| Harness | DeepSeek Harness `dsh-v0.2.1-alpha.1` (tag do GitHub, verificado em 2026-09-25). Verificado em 2026-09-11 contra o checkout master `dsh-v0.1.7-alpha.1` (cadeia completa de portões + smoke de instalação de perfil). `engines.dsh`: `>=0.2.1-0 <0.3.0 \|\| >=0.2.2-0 <0.3.0` |
+| Harness | DeepSeek Harness `dsh-v0.2.2-rc.4` (tag do GitHub, verificado em 2026-11-18). Verificado em 2026-11-18 contra o checkout master `dsh-v0.1.7-alpha.1` (cadeia completa de portões + smoke de instalação de perfil). `engines.dsh`: `>=0.2.1-0 <0.3.0 \|\| >=0.2.2-0 <0.3.0` |
 | Node | `^22.19.0 \|\| >=24.9.0` |
 | Plataformas | **Windows primeiro** (UIAutomation + entrada Win32, via um helper PowerShell incluído); os backends de macOS/Linux estão reservados e falham fechados com um motivo claro |
 | Modelo | Modelos só de texto totalmente suportados (`screen_read` devolve texto estruturado); modelos de visão recebem além disso imagens do `screen_shot` |

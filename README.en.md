@@ -298,7 +298,7 @@ Observations are produced on demand: `screen_read` only walks the accessibility 
 
 | Surface | Status |
 |---|---|
-| Harness | DeepSeek Harness `dsh-v0.2.1-alpha.1` (GitHub tag, verified 2026-09-25). Verified 2026-09-11 against the `dsh-v0.1.7-alpha.1` master checkout (full gate chain + profile install smoke). `engines.dsh`: `>=0.2.1-0 <0.3.0 \|\| >=0.2.2-0 <0.3.0` |
+| Harness | DeepSeek Harness `dsh-v0.2.2-rc.4` (GitHub tag, verified 2026-11-18). Verified 2026-11-18 against the `dsh-v0.1.7-alpha.1` master checkout (full gate chain + profile install smoke). `engines.dsh`: `>=0.2.1-0 <0.3.0 \|\| >=0.2.2-0 <0.3.0` |
 | Node | `^22.19.0 \|\| >=24.9.0` |
 | Platforms | **Windows first** (UIAutomation + Win32 input, via a bundled PowerShell helper); macOS/Linux backends are reserved and fail closed with a clear reason |
 | Model | Text-only models fully supported (`screen_read` returns structured text); vision models additionally get `screen_shot` images |

@@ -298,7 +298,7 @@ Error: dsh-click backend unavailable on linux: Linux backend is reserved but not
 
 | सतह | स्थिति |
 |---|---|
-| Harness | DeepSeek Harness `dsh-v0.2.1-alpha.1` (GitHub tag, 2026-09-25 को सत्यापित)। 2026-09-11 को `dsh-v0.1.7-alpha.1` master checkout के विरुद्ध सत्यापित (पूर्ण गेट शृंखला + profile इंस्टॉल स्मोक)। `engines.dsh`: `>=0.2.1-0 <0.3.0 \|\| >=0.2.2-0 <0.3.0` |
+| Harness | DeepSeek Harness `dsh-v0.2.2-rc.4` (GitHub tag, 2026-11-18 को सत्यापित)। 2026-11-18 को `dsh-v0.1.7-alpha.1` master checkout के विरुद्ध सत्यापित (पूर्ण गेट शृंखला + profile इंस्टॉल स्मोक)। `engines.dsh`: `>=0.2.1-0 <0.3.0 \|\| >=0.2.2-0 <0.3.0` |
 | Node | `^22.19.0 \|\| >=24.9.0` |
 | प्लेटफ़ॉर्म | **Windows पहले** (UIAutomation + Win32 इनपुट, साथ में PowerShell helper); macOS/Linux backend आरक्षित हैं और स्पष्ट कारण के साथ फेल-क्लोज़्ड होते हैं |
 | मॉडल | केवल-टेक्स्ट मॉडल पूर्ण रूप से समर्थित (`screen_read` संरचित टेक्स्ट देता है); विज़न मॉडल को अतिरिक्त रूप से `screen_shot` चित्र मिलते हैं |

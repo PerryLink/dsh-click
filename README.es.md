@@ -298,7 +298,7 @@ Las observaciones se producen bajo demanda: `screen_read` solo recorre el árbol
 
 | Superficie | Estado |
 |---|---|
-| Harness | DeepSeek Harness `dsh-v0.2.1-alpha.1` (tag de GitHub, verificado el 2026-09-25). Verificado el 2026-09-11 contra el checkout master `dsh-v0.1.7-alpha.1` (cadena completa de puertas + smoke de instalación de perfil). `engines.dsh`: `>=0.2.1-0 <0.3.0 \|\| >=0.2.2-0 <0.3.0` |
+| Harness | DeepSeek Harness `dsh-v0.2.2-rc.4` (tag de GitHub, verificado el 2026-11-18). Verificado el 2026-11-18 contra el checkout master `dsh-v0.1.7-alpha.1` (cadena completa de puertas + smoke de instalación de perfil). `engines.dsh`: `>=0.2.1-0 <0.3.0 \|\| >=0.2.2-0 <0.3.0` |
 | Node | `^22.19.0 \|\| >=24.9.0` |
 | Plataformas | **Windows primero** (UIAutomation + entrada Win32, vía un helper PowerShell incluido); los backends de macOS/Linux están reservados y fallan cerrado con una razón clara |
 | Modelo | Modelos de solo texto totalmente soportados (`screen_read` devuelve texto estructurado); los modelos de visión además reciben imágenes de `screen_shot` |

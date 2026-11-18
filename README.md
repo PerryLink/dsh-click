@@ -298,7 +298,7 @@ profile patch 中的覆盖示例：
 
 | 维度 | 状态 |
 |---|---|
-| Harness | DeepSeek Harness `dsh-v0.2.1-alpha.1`（GitHub tag，2026-09-25 已核验）。已于 2026-09-11 对照 `dsh-v0.1.7-alpha.1` master checkout 核验（完整门禁链 + profile 安装冒烟）。`engines.dsh`：`>=0.2.1-0 <0.3.0 \|\| >=0.2.2-0 <0.3.0` |
+| Harness | DeepSeek Harness `dsh-v0.2.2-rc.4`（GitHub tag，2026-11-18 已核验）。已于 2026-11-18 对照 `dsh-v0.1.7-alpha.1` master checkout 核验（完整门禁链 + profile 安装冒烟）。`engines.dsh`：`>=0.2.1-0 <0.3.0 \|\| >=0.2.2-0 <0.3.0` |
 | Node | `^22.19.0 \|\| >=24.9.0` |
 | 平台 | **Windows 优先**（UIAutomation + Win32 输入，经内置 PowerShell helper）；macOS/Linux 后端已预留，失败时以明确原因关闭 |
 | 模型 | 纯文本模型完整可用（`screen_read` 输出结构化文本）；视觉模型额外获得 `screen_shot` 图像 |
