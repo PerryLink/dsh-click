@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.3.32] - 2026-11-20
+
+### Fixed
+
+- **A stalled executable lookup is now bounded by the helper deadline instead of the harness tool timeout (#38).** `invoke()` awaited `resolvePowershell()` *before* arming `AbortSignal.timeout(helperTimeoutMs)`, so a slow `resolveExecutable('powershell.exe')` (PATH scan, UNC/PATHEXT entry, cold AV) could consume the whole harness tool budget before any helper process existed, with no helper-side error. The deadline is now armed first and passed into `resolveExecutable`; an aborted lookup fails closed with `HELPER_TIMEOUT` and drops the cached promise so a later call retries. Regression: a fake subprocess whose lookup hangs must be rejected within the configured deadline, and a lookup that fails outright still reports `HELPER_MISSING`.
+
 ## [0.3.31] - 2026-11-18
 
 ### Fixed

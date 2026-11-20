@@ -86,6 +86,32 @@ class BrokenResolveSubprocessRuntime extends SubprocessRuntime {
   }
 }
 
+
+/** A subprocess provider whose executable lookup hangs until the spec's signal aborts. */
+class HangingResolveSubprocessRuntime extends SubprocessRuntime {
+  constructor(ctx: Context) {
+    super(ctx)
+  }
+
+  resolveExecutable(_command: string, _env?: Readonly<Record<string, string>>, signal?: AbortSignal): Promise<string> {
+    return new Promise<string>((_resolve, reject) => {
+      signal?.addEventListener('abort', () => reject(new Error('executable lookup aborted')), { once: true })
+    })
+  }
+
+  async terminalEnvironment(): Promise<{ platform: 'windows' }> {
+    return { platform: 'windows' }
+  }
+
+  spawn(): SubprocessHandle {
+    throw new Error('should not spawn while the executable lookup hangs')
+  }
+
+  spawnTerminal(): never {
+    throw new Error('not used by tests')
+  }
+}
+
 describe('helper unavailable', () => {
   it('fails closed with HELPER_MISSING when the executable cannot be resolved', async () => {
     const ctx = new Context()
@@ -101,6 +127,16 @@ describe('helper timeout', () => {
     const subprocess = new HangingSubprocessRuntime(ctx)
     const backend = new HelperBackend(resolveConfig({ helperTimeoutMs: 100 }), subprocess)
     await expect(backend.listWindows()).rejects.toThrow(/aborted/u)
+    await ctx.fiber.dispose()
+  })
+})
+
+describe('helper resolve timeout', () => {
+  it('bounds a hung executable lookup with the helper deadline (#38)', async () => {
+    const ctx = new Context()
+    const subprocess = new HangingResolveSubprocessRuntime(ctx)
+    const backend = new HelperBackend(resolveConfig({ helperTimeoutMs: 100 }), subprocess)
+    await expect(backend.listWindows()).rejects.toMatchObject({ code: 'HELPER_TIMEOUT' })
     await ctx.fiber.dispose()
   })
 })

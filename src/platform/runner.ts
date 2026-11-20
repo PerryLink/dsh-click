@@ -220,9 +220,13 @@ export class HelperBackend implements DesktopBackend {
       args,
     }
     const helperPath = findHelperPath()
-    const executable = await this.resolvePowershell()
+    // Arm the deadline before resolving the executable: a stalled executable lookup
+    // (slow PATH, UNC entry, cold AV scanner) must not escape the helper budget. The
+    // old order awaited resolvePowershell() first, so a hang there could burn the whole
+    // harness tool timeout before any helper process existed (#38).
     const deadline = AbortSignal.timeout(this.config.helperTimeoutMs)
     const fused = signal === undefined ? deadline : AbortSignal.any([signal, deadline])
+    const executable = await this.resolvePowershell(fused)
     const handle = this.subprocess.spawn({
       argv: [executable, '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', helperPath],
       cwd: process.cwd(),
@@ -265,15 +269,22 @@ export class HelperBackend implements DesktopBackend {
     return response.result
   }
 
-  /** Resolve (and cache) the powershell executable through the subprocess seam. */
-  private resolvePowershell(): Promise<string> {
+  /**
+   * Resolve (and cache) the powershell executable through the subprocess seam.
+   * @param signal - cancels a stalled lookup; aborts the cached attempt so a later
+   * call retries instead of reusing the rejection.
+   */
+  private resolvePowershell(signal?: AbortSignal): Promise<string> {
     this.powershell ??= this.subprocess
-      .resolveExecutable('powershell.exe')
+      .resolveExecutable('powershell.exe', undefined, signal)
       .catch((error: unknown) => {
         this.powershell = undefined
+        const timedOut = signal?.aborted === true
         throw new DshClickError(
-          `cannot resolve powershell.exe for the desktop helper: ${error instanceof Error ? error.message : String(error)}`,
-          'HELPER_MISSING',
+          timedOut
+            ? `timed out resolving powershell.exe for the desktop helper after ${this.config.helperTimeoutMs}ms`
+            : `cannot resolve powershell.exe for the desktop helper: ${error instanceof Error ? error.message : String(error)}`,
+          timedOut ? 'HELPER_TIMEOUT' : 'HELPER_MISSING',
         )
       })
     return this.powershell
