@@ -43,6 +43,11 @@ O `dsh-click` dá ao modelo um ciclo completo de observar → agir: `screen_read
   <img src="docs/assets/dsh-click-flow-v5-light.svg" width="100%" alt="Estrutura de dois lados do dsh-click: o plano de observação só de leitura à esquerda produz um observationId; a SAFETY BOUNDARY central verifica basedOn, frescura, aprovação, despacho ao helper e identidade do processo, devolvendo recusas a screen_read; o plano de ações mutantes à direita atua pelo helper; os dois eventos de auditoria saneados ficam na barra inferior">
 </picture>
 
+![dsh-click: execução real de terminal](docs/assets/dsh-click-demo.gif)
+
+*Repetição animada de uma execução real registrada neste repositório.*
+
+
 ## Instalação em três passos
 
 1. **Instale** (escolha um canal):

@@ -43,6 +43,11 @@ dsh plugin --profile <name> add dsh-click
   <img src="docs/assets/dsh-click-flow-v5-light.svg" width="100%" alt="dsh-click की दो-पक्षीय संरचना: बाईं read-only observe plane observationId बनाती है; बीच की SAFETY BOUNDARY basedOn, freshness, approval, helper dispatch और process identity जाँचती है और अस्वीकृति को screen_read पर लौटाती है; दाईं mutating act plane helper से काम करती है; नीचे दोनों sanitized ऑडिट इवेंट हैं">
 </picture>
 
+![dsh-click का असली टर्मिनल रन](docs/assets/dsh-click-demo.gif)
+
+*इस रिपॉज़िटरी में दर्ज असली रन का एनिमेटेड रीप्ले।*
+
+
 ## तीन चरणों में शुरुआत
 
 1. **इंस्टॉल करें** (एक चैनल चुनें):

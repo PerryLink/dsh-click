@@ -43,6 +43,11 @@ dsh plugin --profile <name> add dsh-click
   <img src="docs/assets/dsh-click-flow-v5-light.svg" width="100%" alt="Estructura de doble lado de dsh-click: el plano de observación de solo lectura de la izquierda produce un observationId; el SAFETY BOUNDARY central comprueba basedOn, frescura, aprobación, despacho al helper e identidad del proceso, y devuelve los rechazos a screen_read; el plano de acciones mutantes de la derecha actúa mediante el helper; los dos eventos de auditoría saneados están en la barra inferior">
 </picture>
 
+![dsh-click: ejecución real de terminal](docs/assets/dsh-click-demo.gif)
+
+*Repetición animada de una ejecución real registrada en este repositorio.*
+
+
 ## Instalación en tres pasos
 
 1. **Instala** (elige un canal):

@@ -36,6 +36,10 @@ dsh plugin --profile <name> add dsh-click
 
 ## 它是什么
 
+![dsh-click 真实终端运行](docs/assets/dsh-click-demo.gif)
+
+*本仓库一次真实运行的动图回放。*
+
 `dsh-click` 给模型一条完整的「观察 → 行动」通道：先用 `screen_read` 读窗口的无障碍树（元素 id、类型、名称、矩形、支持的模式）与像素位置提示，或用 `screen_shot` 截一张图；再用 `click` / `type` / `scroll` / `key` 按元素 id 或坐标操作同一个窗口。每个变更性动作都必须引用一次新鲜观察（`basedOn`）——屏幕变了或观察过期就拒绝，并给出模型可读的理由；默认还要过 `ctx.approval` 审批，动作前后各校验一次目标进程身份。它默认不抢前台焦点（`focusFallback: never`），所有观察与操作都落成脱敏的 `dsh-click/observed` / `dsh-click/action` 审计事件。
 
 <picture>
