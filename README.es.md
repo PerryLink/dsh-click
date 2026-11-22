@@ -11,6 +11,8 @@
 
 Control nativo del escritorio para DeepSeek Harness (Windows primero): el árbol de accesibilidad y las pistas de píxeles permiten que un modelo de solo texto «vea», el clic y la entrada con ámbito de ventana le permiten «actuar», y la aprobación, la frescura y la identidad del proceso quedan en medio.
 
+Última verificación: DeepSeek Harness `dsh-v0.2.3-alpha.1` (2026-11-22).
+
 [Instalar](#instalación-en-tres-pasos) · [Configuración](#configuración) · [FAQ](#faq) · [简体中文](README.md) · [English](README.en.md) · [Español](README.es.md) · [Português](README.pt.md) · [हिन्दी](README.hi.md)
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-3366CC?style=flat-square&labelColor=2B3245)](LICENSE)
@@ -46,7 +48,6 @@ dsh plugin --profile <name> add dsh-click
 ![dsh-click: ejecución real de terminal](docs/assets/dsh-click-demo.gif)
 
 *Repetición animada de una ejecución real registrada en este repositorio.*
-
 
 ## Instalación en tres pasos
 
@@ -145,7 +146,6 @@ modelo                          harness
 - **`width` / `height` son el tamaño del bitmap, no el de la ventana**: ya vienen reducidos a `maxScreenshotSide`, mientras que `snapshot.rect` es siempre el rectángulo físico de la ventana (o de la pantalla). Conversión: `bitmapX = (screenX - rect.x) * width / rect.width`.
 - **Todos los rectángulos están en píxeles físicos**: la conciencia de DPI se fija al arrancar el helper (Per-Monitor V2), y `app_list`, `screen_read`, `screen_shot` y `click` comparten el mismo espacio de coordenadas.
 - **Ventanas minimizadas**: `app_list` las marca con `minimized: true` y no devuelve `rect` (Windows da el rectángulo comodín `-32000` mientras están minimizadas); `screen_shot` / `screen_read` fallan con `WINDOW_MINIMIZED`; restaura la ventana primero.
-
 
 ### Ejemplos
 

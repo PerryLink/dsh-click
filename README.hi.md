@@ -11,6 +11,8 @@
 
 DeepSeek Harness के लिए नेटिव डेस्कटॉप नियंत्रण (Windows पहले): accessibility tree और pixel संकेत टेक्स्ट-मात्र मॉडल को «देखने» देते हैं, विंडो-स्कोप वाला क्लिक और इनपुट उसे «काम करने» देते हैं, और बीच में मंज़ूरी, ताज़गी तथा प्रक्रिया-पहचान की जाँचें रहती हैं।
 
+अंतिम सत्यापन: DeepSeek Harness `dsh-v0.2.3-alpha.1` (2026-11-22).
+
 [इंस्टॉल](#तीन-चरणों-में-शुरुआत) · [कॉन्फ़िगरेशन](#कॉन्फ़िगरेशन) · [FAQ](#faq) · [简体中文](README.md) · [English](README.en.md) · [Español](README.es.md) · [Português](README.pt.md) · [हिन्दी](README.hi.md)
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-3366CC?style=flat-square&labelColor=2B3245)](LICENSE)
@@ -46,7 +48,6 @@ dsh plugin --profile <name> add dsh-click
 ![dsh-click का असली टर्मिनल रन](docs/assets/dsh-click-demo.gif)
 
 *इस रिपॉज़िटरी में दर्ज असली रन का एनिमेटेड रीप्ले।*
-
 
 ## तीन चरणों में शुरुआत
 
@@ -145,7 +146,6 @@ dsh plugin --profile <name> add dsh-click
 - **`width` / `height` बिटमैप का आकार हैं, विंडो का नहीं**: ये `maxScreenshotSide` तक घटाए जा चुके हैं, जबकि `snapshot.rect` हमेशा विंडो (या स्क्रीन) का भौतिक आयत है। रूपांतरण: `bitmapX = (screenX - rect.x) * width / rect.width`.
 - **सभी आयत भौतिक पिक्सेल में हैं**: DPI जागरूकता helper शुरू होते ही सेट होती है (Per-Monitor V2), और `app_list`, `screen_read`, `screen_shot` तथा `click` एक ही निर्देशांक स्थान साझा करते हैं।
 - **minimized विंडो**: `app_list` उन्हें `minimized: true` से चिह्नित करता है और `rect` नहीं देता (Windows minimized अवस्था में `-32000` प्लेसहोल्डर आयत देता है); `screen_shot` / `screen_read` स्पष्ट रूप से `WINDOW_MINIMIZED` देकर विफल होते हैं — पहले विंडो बहाल करें।
-
 
 ### उदाहरण
 

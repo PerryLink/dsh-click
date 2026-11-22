@@ -11,6 +11,8 @@
 
 Native desktop control for DeepSeek Harness (Windows first): an accessibility tree plus pixel hints let text-only models “see”, window-scoped click and input let them “act”, and approval, freshness, and process-identity checks sit in between.
 
+Last verified on DeepSeek Harness `dsh-v0.2.3-alpha.1` (2026-11-22).
+
 [Install](#three-step-setup) · [Configuration](#configuration) · [FAQ](#faq) · [简体中文](README.md) · [English](README.en.md) · [Español](README.es.md) · [Português](README.pt.md) · [हिन्दी](README.hi.md)
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-3366CC?style=flat-square&labelColor=2B3245)](LICENSE)
@@ -140,7 +142,6 @@ model                           harness
 - **`width` / `height` are the bitmap size, not the window size**: they are already downscaled to `maxScreenshotSide`, while `snapshot.rect` is always the physical window (or screen) rectangle. Map with `bitmapX = (screenX - rect.x) * width / rect.width`.
 - **Every rectangle is in physical pixels**: DPI awareness is set when the helper starts (Per-Monitor V2), and `app_list`, `screen_read`, `screen_shot`, and `click` share one coordinate space.
 - **Minimized windows**: `app_list` marks them `minimized: true` and returns no `rect` (Windows reports the `-32000` placeholder rect while iconified); `screen_shot` / `screen_read` fail with `WINDOW_MINIMIZED`, so restore the window first.
-
 
 ### Examples
 

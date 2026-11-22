@@ -11,6 +11,8 @@
 
 面向 DeepSeek Harness 的原生桌面控制插件（Windows 优先）：无障碍树与像素提示让纯文本模型也能“看”，窗口级点击与输入让模型“动”，审批、新鲜度与进程身份校验守在中间。
 
+最近一次核验：DeepSeek Harness `dsh-v0.2.3-alpha.1`（2026-11-22）。
+
 [安装](#三步上手) · [配置](#配置) · [FAQ](#faq) · [简体中文](README.md) · [English](README.en.md) · [Español](README.es.md) · [Português](README.pt.md) · [हिन्दी](README.hi.md)
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-3366CC?style=flat-square&labelColor=2B3245)](LICENSE)
@@ -144,7 +146,6 @@ dsh plugin --profile <name> add dsh-click
 - **`width` / `height` 是位图尺寸，不是窗口尺寸**：它们已被 `maxScreenshotSide` 下采样；`snapshot.rect` 始终是物理像素的窗口（或屏幕）矩形。换算方式：`bitmapX = (screenX - rect.x) * width / rect.width`。
 - **所有矩形都是物理像素**：DPI 感知在 helper 启动时设置（Per-Monitor V2），`app_list`、`screen_read`、`screen_shot` 与 `click` 共用同一坐标空间。
 - **最小化窗口**：`app_list` 标记 `minimized: true` 并且不返回 `rect`（Windows 在最小化时给的是 `-32000` 占位矩形）；`screen_shot` / `screen_read` 对它明确报 `WINDOW_MINIMIZED`，请先还原窗口。
-
 
 ### 示例
 
