@@ -7,6 +7,8 @@
 
 # dsh-click
 
+Current version `0.3.34`.
+
 **See the screen, then act — every mutating click is gated, every observation and action is audited.**
 
 Native desktop control for DeepSeek Harness (Windows first): an accessibility tree plus pixel hints let text-only models “see”, window-scoped click and input let them “act”, and approval, freshness, and process-identity checks sit in between.
